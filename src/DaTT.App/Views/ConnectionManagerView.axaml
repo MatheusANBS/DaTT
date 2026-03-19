@@ -1,0 +1,212 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             xmlns:models="using:DaTT.Core.Models"
+             x:Class="DaTT.App.Views.ConnectionManagerView"
+             x:DataType="vm:ConnectionManagerViewModel">
+
+    <Grid ColumnDefinitions="320,Auto,*">
+
+        <Border Grid.Column="0" Classes="sidebar">
+            <Grid RowDefinitions="Auto,*,Auto">
+
+                <TextBlock Classes="section-title" Text="SAVED CONNECTIONS" />
+
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding Connections}"
+                         SelectedItem="{Binding SelectedConnection}"
+                         Margin="4,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ConnectionConfig">
+                            <Grid ColumnDefinitions="*,Auto" Margin="4,2">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontSize="12" />
+                                    <TextBlock Text="{Binding Engine}" FontSize="10" Foreground="{DynamicResource TextMuted}" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="2" Margin="8,4,8,8">
+                    <Button Classes="toolbar-btn,danger" Content="Delete" Command="{Binding RemoveConnectionCommand}" ToolTip.Tip="Delete selected connection" />
+                    <Button Classes="toolbar-btn,ghost" Content="Ping" Command="{Binding CheckAliveSelectedCommand}" ToolTip.Tip="Check if connection is alive" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent" />
+
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="16" MaxWidth="600" Spacing="12">
+
+                <TextBlock Text="Connection Settings" FontSize="14" FontWeight="SemiBold" />
+
+                <Grid ColumnDefinitions="*,12,*">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Name" Classes="muted" />
+                        <TextBox Watermark="Connection name" Text="{Binding NewConnectionName}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Text="Engine" Classes="muted" />
+                        <ComboBox HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding SupportedEngines}"
+                                  SelectedItem="{Binding SelectedEngine}" />
+                    </StackPanel>
+                </Grid>
+
+                <CheckBox Content="Use connection builder" IsChecked="{Binding UseBuilderMode}" FontSize="12" />
+
+                <Border Classes="card" IsVisible="{Binding UseBuilderMode}">
+                    <StackPanel Spacing="8">
+
+                        <StackPanel IsVisible="{Binding IsGenericBuilderVisible}" Spacing="6">
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Host" Classes="muted" />
+                                    <TextBox Watermark="127.0.0.1" Text="{Binding BuilderHost}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Port" Classes="muted" />
+                                    <TextBox Watermark="3306" Text="{Binding BuilderPort}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Database" Classes="muted" />
+                                    <TextBox Watermark="mydb" Text="{Binding BuilderDatabase}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Username" Classes="muted" />
+                                    <TextBox Watermark="root" Text="{Binding BuilderUsername}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,12,Auto">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Password" Classes="muted" />
+                                    <TextBox Watermark="password" PasswordChar="*" Text="{Binding BuilderPassword}" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="2" Content="SSL" IsChecked="{Binding BuilderUseSsl}" VerticalAlignment="Bottom" FontSize="12" Margin="0,0,0,4" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding IsRedisBuilderVisible}" Spacing="6">
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Host" Classes="muted" />
+                                    <TextBox Watermark="127.0.0.1" Text="{Binding BuilderHost}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Port" Classes="muted" />
+                                    <TextBox Watermark="6379" Text="{Binding BuilderPort}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Password" Classes="muted" />
+                                    <TextBox Watermark="optional" PasswordChar="*" Text="{Binding BuilderPassword}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="DB Index" Classes="muted" />
+                                    <TextBox Watermark="0" Text="{Binding BuilderRedisDb}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding IsElasticBuilderVisible}" Spacing="6">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="URL" Classes="muted" />
+                                <TextBox Watermark="http://127.0.0.1:9200" Text="{Binding BuilderElasticUrl}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Auth Mode" Classes="muted" />
+                                    <ComboBox HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding ElasticAuthModes}"
+                                              SelectedItem="{Binding BuilderElasticAuthMode}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Username" Classes="muted" />
+                                    <TextBox Watermark="elastic" Text="{Binding BuilderUsername}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Password" Classes="muted" />
+                                <TextBox Watermark="password" PasswordChar="*" Text="{Binding BuilderPassword}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="API Key" Classes="muted" />
+                                <TextBox Watermark="token" PasswordChar="*" Text="{Binding BuilderElasticApiKey}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding IsSshBuilderVisible}" Spacing="6">
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="SSH Host" Classes="muted" />
+                                    <TextBox Watermark="127.0.0.1" Text="{Binding BuilderSshHost}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="SSH Port" Classes="muted" />
+                                    <TextBox Watermark="22" Text="{Binding BuilderSshPort}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,12,*">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Username" Classes="muted" />
+                                    <TextBox Watermark="root" Text="{Binding BuilderSshUsername}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Auth Type" Classes="muted" />
+                                    <ComboBox HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding SshAuthModes}"
+                                              SelectedItem="{Binding BuilderSshAuthType}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="SSH Password" Classes="muted" />
+                                <TextBox Watermark="password" PasswordChar="*" Text="{Binding BuilderSshPassword}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Private Key Path" Classes="muted" />
+                                <TextBox Watermark="/path/to/key" Text="{Binding BuilderSshPrivateKeyPath}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Passphrase" Classes="muted" />
+                                <TextBox Watermark="optional" PasswordChar="*" Text="{Binding BuilderSshPassphrase}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Start Path" Classes="muted" />
+                                <TextBox Watermark="/" Text="{Binding BuilderSshStartPath}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Content="Build Connection String" Command="{Binding BuildConnectionStringCommand}" Classes="ghost" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Connection String" Classes="muted" />
+                    <TextBox Watermark="Connection string (auto-generated or manual)" Text="{Binding NewConnectionString}" />
+                </StackPanel>
+
+                <TextBox Text="{Binding BuilderPreviewConnectionString}" IsReadOnly="True" TextWrapping="Wrap" FontSize="11"
+                         IsVisible="{Binding UseBuilderMode}" />
+
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Classes="primary" Content="Add Connection" Command="{Binding AddConnectionCommand}" MinWidth="120" />
+                    <Button Classes="ghost" Content="Update Selected" Command="{Binding UpdateSelectedConnectionCommand}" MinWidth="120" />
+                    <Button Classes="ghost" Content="Test Connection" Command="{Binding TestConnectionCommand}" MinWidth="120" />
+                </StackPanel>
+
+                <Border Classes="inline-info"
+                        IsVisible="{Binding TestResultMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding TestResultMessage}" TextWrapping="Wrap" FontSize="12" />
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+
+</UserControl>

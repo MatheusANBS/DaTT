@@ -1,0 +1,63 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DaTT.App.ViewModels"
+        x:Class="DaTT.App.Views.CellEditWindow"
+        x:DataType="vm:CellEditViewModel"
+        Title="Edit Cell"
+        Width="760" Height="560"
+        MinWidth="520" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Column:" FontWeight="SemiBold" VerticalAlignment="Center" FontSize="12" />
+                <TextBlock Text="{Binding ColumnName}" VerticalAlignment="Center" FontSize="12" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                <CheckBox Content="JSON tree" IsChecked="{Binding ShowJsonTree}" IsEnabled="{Binding IsJson}" VerticalAlignment="Center" FontSize="12" />
+                <Button Classes="primary" Content="Save" MinWidth="80" Click="OnSaveClicked" />
+                <Button Classes="ghost" Content="Cancel" MinWidth="80" Click="OnCancelClicked" />
+            </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="3*,Auto,2*">
+            <TextBox Grid.Column="0"
+                     Text="{Binding Value, Mode=TwoWay}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     FontFamily="Consolas,Courier New,Monospace"
+                     FontSize="12"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="8"
+                     VerticalAlignment="Stretch"
+                     HorizontalAlignment="Stretch" />
+
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent"
+                          IsVisible="{Binding ShowJsonTree}" />
+
+            <Border Grid.Column="2" Classes="sidebar" IsVisible="{Binding ShowJsonTree}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Classes="section-title" Text="JSON TREE" />
+                    <TreeView ItemsSource="{Binding JsonNodes}" Margin="4">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="vm:JsonTreeNode" ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding Key}" FontWeight="SemiBold" FontSize="11" />
+                                    <TextBlock Text="{Binding Value}" Foreground="{DynamicResource TextMuted}" FontSize="11" />
+                                </StackPanel>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+    </DockPanel>
+</Window>

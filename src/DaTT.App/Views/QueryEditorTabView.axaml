@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.QueryEditorTabView"
+             x:DataType="vm:QueryEditorTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button Classes="toolbar-btn,primary" Content="Run" Click="OnRunClick" />
+                <Button Classes="toolbar-btn,ghost" Content="Run All" Click="OnRunAllClick" />
+                <Button Classes="toolbar-btn,ghost" Content="Cancel" Command="{Binding CancelExecutionCommand}" IsEnabled="{Binding IsExecuting}" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="toolbar-btn,ghost" Content="Format" Command="{Binding FormatSqlCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh Meta" Command="{Binding RefreshLanguageToolsCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Table at Caret" Click="OnQueryTableAtCaretClick" />
+                <Button Classes="toolbar-btn,ghost" Content="Run History" Click="OnRunSelectedHistoryClick" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <TextBlock VerticalAlignment="Center" Text="Rows" Classes="muted" Margin="4,0" />
+                <ComboBox Width="80" ItemsSource="{Binding PreviewRowOptions}" SelectedItem="{Binding MaxPreviewRows}" />
+                <ProgressBar IsIndeterminate="True" Width="60" Height="8" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" Margin="6,0" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ResultInfoMessage}" Classes="muted" Margin="6,0" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Danger}" FontSize="12"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Margin="6,0" />
+            </StackPanel>
+        </Border>
+
+        <Grid RowDefinitions="*,Auto,*">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,220">
+                <TextBox Grid.Column="0"
+                         Text="{Binding QueryText}"
+                         x:Name="QueryEditor"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         TextChanged="OnQueryEditorTextChanged"
+                         KeyDown="OnQueryEditorKeyDown"
+                         KeyUp="OnQueryEditorKeyUp"
+                         FontFamily="Consolas,Courier New,Monospace"
+                         FontSize="13"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="8"
+                         Watermark="Write SQL here... Use ';' to run batch." />
+
+                <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent" />
+
+                <Border Grid.Column="2" Classes="sidebar">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="section-title" Text="OUTLINE" />
+                            <ListBox x:Name="OutlineList"
+                                     ItemsSource="{Binding SqlOutlineItems}"
+                                     SelectionChanged="OnOutlineSelectionChanged"
+                                     Margin="4,0"
+                                     MaxHeight="120">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Label}" TextWrapping="NoWrap" FontSize="11" Padding="4,2" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Classes="section-title" Text="SUGGESTIONS" />
+                            <ListBox x:Name="SuggestionList"
+                                     ItemsSource="{Binding CompletionSuggestions}"
+                                     IsVisible="{Binding IsSuggestionsVisible}"
+                                     Margin="4,0"
+                                     MaxHeight="100"
+                                     SelectionChanged="OnSuggestionSelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontSize="11" Padding="4,2" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Classes="section-title" Text="HISTORY" />
+                            <ListBox x:Name="HistoryList"
+                                     ItemsSource="{Binding QueryHistoryEntries}"
+                                     SelectionChanged="OnHistorySelectionChanged"
+                                     Margin="4,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Spacing="1" Margin="2">
+                                            <TextBlock Text="{Binding SqlPreview}" TextWrapping="NoWrap" FontSize="11" />
+                                            <TextBlock FontSize="10" Foreground="{DynamicResource TextMuted}" Text="{Binding DisplayTimestamp}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock Text="{Binding LanguageToolStatusMessage}" Classes="muted" TextWrapping="Wrap" Margin="12,4" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="4" Background="Transparent" />
+
+            <DataGrid Grid.Row="2"
+                      x:Name="ResultGrid"
+                      ItemsSource="{Binding QueryResultRows}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="True" />
+
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

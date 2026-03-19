@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.RedisConsoleTabView"
+             x:DataType="vm:RedisConsoleTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBox Width="420" Text="{Binding CommandText}" Watermark="Redis command (PING, KEYS *, GET key...)" />
+                <Button Classes="toolbar-btn,primary" Content="Execute" Command="{Binding ExecuteCommandCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh Keys" Command="{Binding RefreshKeysCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh Status" Command="{Binding RefreshStatusCommand}" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Danger}" FontSize="12"
+                           Margin="6,0" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="260,Auto,*">
+
+            <Border Grid.Column="0" Classes="sidebar">
+                <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="0">
+                    <TextBlock Classes="section-title" Text="KEYS" />
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Keys}" SelectedItem="{Binding SelectedKey}" Margin="4,0" />
+
+                    <StackPanel Grid.Row="2" Margin="8,4" Spacing="2">
+                        <TextBlock Text="{Binding SelectedKeyType, StringFormat='Type: {0}'}" FontSize="11" />
+                        <TextBlock Text="{Binding SelectedKeyTtl, StringFormat='TTL: {0}'}" FontSize="11" />
+                    </StackPanel>
+
+                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="8,2">
+                        <TextBox Watermark="Rename" Text="{Binding RenameTarget}" />
+                        <Button Grid.Column="1" Classes="toolbar-btn,ghost" Content="Rename" Command="{Binding RenameSelectedKeyCommand}" />
+                    </Grid>
+
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="8,2">
+                        <TextBox Watermark="TTL (s)" Text="{Binding TtlSecondsInput}" />
+                        <Button Grid.Column="1" Classes="toolbar-btn,ghost" Content="Set" Command="{Binding SetTtlSelectedKeyCommand}" />
+                    </Grid>
+
+                    <StackPanel Grid.Row="5" Margin="8,2,8,8" Spacing="2">
+                        <TextBox Watermark="String value" Text="{Binding SetValueInput}" />
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <Button Classes="toolbar-btn,ghost" Content="Set Value" Command="{Binding SetStringValueCommand}" />
+                            <Button Classes="toolbar-btn,danger" Content="Delete" Command="{Binding DeleteSelectedKeyCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent" />
+
+            <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,*">
+                <TextBlock Classes="section-title" Text="STATUS" />
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding StatusMetrics}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Metric" Binding="{Binding Metric}" Width="220" />
+                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Grid.Row="2" Classes="section-title" Text="CONSOLE" />
+                <ListBox Grid.Row="3" ItemsSource="{Binding ConsoleLines}" />
+            </Grid>
+
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

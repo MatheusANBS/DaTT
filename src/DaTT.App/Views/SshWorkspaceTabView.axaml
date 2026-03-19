@@ -1,0 +1,117 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.SshWorkspaceTabView"
+             x:DataType="vm:SshWorkspaceTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button Classes="toolbar-btn,primary" Content="Connect" Command="{Binding ConnectCommand}" />
+                <Button Classes="toolbar-btn,danger" Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh" Command="{Binding RefreshDirectoryCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Up" Command="{Binding NavigateUpCommand}" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="toolbar-btn,ghost" Content="Upload" Click="OnUploadClick" />
+                <Button Classes="toolbar-btn,ghost" Content="Download" Click="OnDownloadClick" />
+                <Button Classes="toolbar-btn,ghost" Content="Delete" Command="{Binding DeleteSelectedEntryCommand}" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" Classes="muted" TextWrapping="NoWrap" Margin="8,0" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Danger}" FontSize="12"
+                           Margin="6,0" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="320,Auto,*">
+
+            <Border Grid.Column="0" Classes="sidebar">
+                <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+                    <TextBlock Classes="section-title" Text="FILES" />
+
+                    <TextBox Grid.Row="1" Text="{Binding CurrentPath}" IsReadOnly="True" Margin="8,2" FontSize="11" />
+
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding Entries}"
+                             SelectedItem="{Binding SelectedEntry}"
+                             DoubleTapped="OnEntriesDoubleTapped"
+                             Margin="4,4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SshFileEntry">
+                                <Grid ColumnDefinitions="36,*,60">
+                                    <TextBlock Grid.Column="0" Text="{Binding Type}" FontSize="11" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Size}" HorizontalAlignment="Right" FontSize="11" Classes="muted" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="8,2">
+                        <TextBox Watermark="New folder" Text="{Binding NewFolderName}" />
+                        <Button Grid.Column="1" Classes="toolbar-btn,ghost" Content="Create" Command="{Binding CreateFolderCommand}" />
+                    </Grid>
+
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="8,2,8,8">
+                        <TextBox Watermark="New file" Text="{Binding NewFileName}" />
+                        <Button Grid.Column="1" Classes="toolbar-btn,ghost" Content="Create" Command="{Binding CreateFileCommand}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent" />
+
+            <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto,Auto,*">
+                <TextBlock Classes="section-title" Text="TERMINAL" />
+
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,2">
+                    <TextBox Text="{Binding TerminalCommand}" Watermark="SSH command" />
+                    <Button Grid.Column="1" Classes="toolbar-btn,primary" Content="Run" Command="{Binding ExecuteTerminalCommandCommand}" />
+                </Grid>
+
+                <ListBox Grid.Row="2" ItemsSource="{Binding TerminalLines}" Margin="4" />
+
+                <TextBlock Grid.Row="3" Classes="section-title" Text="PORT FORWARDING" />
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="4" Margin="8,2">
+                    <TextBox Width="70" Watermark="Local" Text="{Binding LocalPortInput}" />
+                    <TextBox Width="140" Watermark="Remote host" Text="{Binding RemoteHostInput}" />
+                    <TextBox Width="70" Watermark="Remote" Text="{Binding RemotePortInput}" />
+                    <Button Classes="toolbar-btn,primary" Content="Add" Command="{Binding AddPortForwardRuleCommand}" />
+                </StackPanel>
+
+                <DataGrid Grid.Row="5"
+                          ItemsSource="{Binding PortForwardRules}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          Margin="4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Local" Binding="{Binding LocalPort}" Width="70" />
+                        <DataGridTextColumn Header="Remote Host" Binding="{Binding RemoteHost}" Width="160" />
+                        <DataGridTextColumn Header="Remote Port" Binding="{Binding RemotePort}" Width="80" />
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80" />
+                        <DataGridTemplateColumn Header="Actions" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="vm:SshPortForwardRule">
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <Button Classes="toolbar-btn,ghost" Content="Start"
+                                                Command="{Binding $parent[UserControl].DataContext.StartPortForwardRuleCommand}"
+                                                CommandParameter="{Binding}" />
+                                        <Button Classes="toolbar-btn,ghost" Content="Stop"
+                                                Command="{Binding $parent[UserControl].DataContext.StopPortForwardRuleCommand}"
+                                                CommandParameter="{Binding}" />
+                                        <Button Classes="toolbar-btn,danger" Content="Remove"
+                                                Command="{Binding $parent[UserControl].DataContext.RemovePortForwardRuleCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

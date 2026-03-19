@@ -1,0 +1,138 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DaTT.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+        x:Class="DaTT.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="DaTT — Database Tool"
+        Width="1280" Height="720"
+        MinWidth="900" MinHeight="600"
+        ExtendClientAreaToDecorationsHint="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- ─── Top Toolbar ──────────────────────────────────────── -->
+        <Border Grid.Row="0" Classes="toolbar">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="toolbar-btn" Content="&#x2630;" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Toggle explorer" />
+                    <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                    <Button Classes="toolbar-btn,ghost" Content="Connections" Command="{Binding OpenConnectionManagerCommand}" />
+                    <Button Classes="toolbar-btn,primary" Content="Connect" Command="{Binding ConnectCommand}" />
+                    <Button Classes="toolbar-btn,danger" Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                    <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                    <Button Classes="toolbar-btn,ghost" Content="Query" Command="{Binding OpenQueryEditorCommand}" />
+                    <Button Classes="toolbar-btn,ghost" Content="Diff" Command="{Binding OpenSchemaDiffCommand}" />
+                    <Button Classes="toolbar-btn,ghost" Content="Monitor" Command="{Binding OpenMonitorCommand}" />
+                    <Button Classes="toolbar-btn,ghost" Content="Redis" Command="{Binding OpenRedisConsoleCommand}" />
+                    <Button Classes="toolbar-btn,ghost" Content="Elastic" Command="{Binding OpenElasticConsoleCommand}" />
+                    <Button Classes="toolbar-btn,ghost" Content="SSH" Command="{Binding OpenSshWorkspaceCommand}" />
+                    <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                    <Button Classes="toolbar-btn,ghost" Content="New Table" Click="OnCreateTableClick" ToolTip.Tip="Create a new table" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource Danger}"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="12,0"
+                           TextTrimming="CharacterEllipsis"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </Grid>
+        </Border>
+
+        <!-- ─── Main Content ─────────────────────────────────────── -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+
+            <!-- ─── Sidebar (Explorer only) ──────────────────────── -->
+            <Border Grid.Column="0" Classes="sidebar" Width="280" IsVisible="{Binding IsSidebarVisible}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Classes="section-title" Text="EXPLORER" />
+                    <TreeView Margin="4,0"
+                              ItemsSource="{Binding ObjectExplorer.RootNodes}"
+                              SelectedItem="{Binding ObjectExplorer.SelectedNode, Mode=TwoWay}"
+                              DoubleTapped="OnTreeDoubleTapped">
+                        <TreeView.ContextMenu>
+                            <ContextMenu Opening="OnTreeContextMenuOpening">
+                                <MenuItem x:Name="MenuOpenTable" Header="Open Table" Click="OnOpenTableClick" />
+                                <Separator />
+                                <MenuItem x:Name="MenuSelectTemplate" Header="SELECT *" Click="OnSelectTemplateClick" />
+                                <MenuItem x:Name="MenuCountTemplate" Header="SELECT COUNT(*)" Click="OnCountTemplateClick" />
+                                <MenuItem x:Name="MenuShowSource" Header="Show Source" Click="OnShowSourceClick" />
+                                <MenuItem x:Name="MenuCopyName" Header="Copy Name" Click="OnCopyNameClick" />
+                                <Separator />
+                                <MenuItem x:Name="MenuTruncate" Header="Truncate Table" Click="OnTruncateTableClick" />
+                                <MenuItem x:Name="MenuDrop" Header="Drop Table" Click="OnDropTableClick" />
+                                <Separator />
+                                <MenuItem x:Name="MenuDumpTable" Header="Dump Table">
+                                    <MenuItem Header="Structure (DDL)" Click="OnDumpSchemaClick" Tag="structure" />
+                                    <MenuItem Header="Data (INSERT)" Click="OnDumpSchemaClick" Tag="data" />
+                                    <MenuItem Header="Structure + Data" Click="OnDumpSchemaClick" Tag="all" />
+                                    <Separator />
+                                    <MenuItem Header="CSV" Click="OnDumpTableClick" Tag="csv" />
+                                    <MenuItem Header="JSON" Click="OnDumpTableClick" Tag="json" />
+                                    <MenuItem Header="SQL (INSERT)" Click="OnDumpTableClick" Tag="sql" />
+                                    <MenuItem Header="XLSX" Click="OnDumpTableClick" Tag="xlsx" />
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem x:Name="MenuCreateTable" Header="Create Table..." Click="OnCreateTableClick" />
+                                <Separator />
+                                <MenuItem x:Name="MenuDumpSchema" Header="Dump Schema">
+                                    <MenuItem Header="Structure (DDL)" Click="OnDumpSchemaClick" Tag="structure" />
+                                    <MenuItem Header="Data (INSERT)" Click="OnDumpSchemaClick" Tag="data" />
+                                    <MenuItem Header="Structure + Data" Click="OnDumpSchemaClick" Tag="all" />
+                                </MenuItem>
+                            </ContextMenu>
+                        </TreeView.ContextMenu>
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="vm:TreeNodeViewModel" ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding Label}" Padding="4,2" FontSize="12" />
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+
+
+
+            <!-- ─── Tab Content Area ─────────────────────────────── -->
+            <Grid Grid.Column="1" RowDefinitions="*">
+                <TabControl ItemsSource="{Binding OpenTabs}" SelectedItem="{Binding ActiveTab}">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TabViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12" />
+                                <Button Classes="tab-close" Content="&#xD7;"
+                                        Command="{Binding $parent[Window].DataContext.CloseTabCommand}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <ContentControl Content="{Binding}" />
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+            </Grid>
+        </Grid>
+
+        <!-- ─── Status Bar ───────────────────────────────────────── -->
+        <Border Grid.Row="2" Classes="statusbar">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Classes="statusbar-text"
+                           Text="{Binding ConnectionStatusText}"
+                           FontSize="12" />
+                <TextBlock Grid.Column="2" Classes="statusbar-text"
+                           Text="DaTT"
+                           FontSize="12"
+                           Opacity="0.7" />
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</Window>

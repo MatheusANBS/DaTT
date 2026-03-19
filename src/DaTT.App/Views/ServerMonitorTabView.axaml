@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.ServerMonitorTabView"
+             x:DataType="vm:ServerMonitorTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Classes="toolbar-btn,primary" Content="Refresh" Command="{Binding RefreshCommand}" />
+                <CheckBox Content="Auto" IsChecked="{Binding IsAutoRefreshEnabled}" VerticalAlignment="Center" FontSize="12" />
+                <TextBlock Text="Interval" VerticalAlignment="Center" Classes="muted" Margin="4,0" />
+                <NumericUpDown Minimum="2" Maximum="60" Value="{Binding RefreshIntervalSeconds}" Width="70" />
+                <TextBlock Text="{Binding StatusMessage}" Classes="muted" VerticalAlignment="Center" Margin="8,0" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock DockPanel.Dock="Top"
+                   Text="{Binding ErrorMessage}"
+                   Foreground="{DynamicResource Danger}"
+                   FontSize="12"
+                   Margin="8,4"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        <Grid RowDefinitions="*,Auto,Auto,*">
+            <DataGrid Grid.Row="0"
+                      ItemsSource="{Binding Metrics}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Metric" Binding="{Binding Name}" Width="220" />
+                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="4" Background="Transparent" />
+
+            <TextBlock Grid.Row="2" Classes="section-title" Text="PING SAMPLES" />
+
+            <DataGrid Grid.Row="3"
+                      ItemsSource="{Binding PingSamples}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Time" Binding="{Binding DisplayAt}" Width="160" />
+                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding PingMs}" Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

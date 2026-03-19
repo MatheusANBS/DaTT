@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DaTT.App.ViewModels"
+        x:Class="DaTT.App.Views.EditRowWindow"
+        x:DataType="vm:EditRowViewModel"
+        Title="{Binding Mode}"
+        Width="540" Height="600"
+        MinWidth="400" MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding TableName}" VerticalAlignment="Center" />
+                <TextBlock FontSize="11" Foreground="{DynamicResource TextMuted}" Text="{Binding Mode, StringFormat='({0})'}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                <Button Classes="primary" Content="Save" Click="OnSaveClicked" MinWidth="80" />
+                <Button Classes="ghost" Content="Cancel" Click="OnCancelClicked" MinWidth="80" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Fields}" Margin="8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FieldEdit">
+                        <Grid ColumnDefinitions="140,8,*" Margin="0,3">
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ColumnName}" FontSize="12"
+                                           FontWeight="{Binding IsPrimaryKey, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}" />
+                                <TextBlock Text="{Binding DataType}" FontSize="10" Foreground="{DynamicResource TextMuted}" />
+                            </StackPanel>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding Value}"
+                                     IsReadOnly="{Binding IsPrimaryKey}"
+                                     Opacity="{Binding IsPrimaryKey, Converter={x:Static vm:BoolToOpacityConverter.Instance}}"
+                                     AcceptsReturn="True"
+                                     MaxHeight="80" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

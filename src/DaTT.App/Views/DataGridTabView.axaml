@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.DataGridTabView"
+             x:DataType="vm:DataGridTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button Classes="toolbar-btn" Content="+ Insert" Command="{Binding InsertRowCommand}" ToolTip.Tip="Insert a new row" />
+                <Button Classes="toolbar-btn,primary" Content="Save" Command="{Binding SavePendingChangesCommand}" IsEnabled="{Binding HasPendingChanges}" ToolTip.Tip="Save pending edits" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh" Command="{Binding RefreshTableCommand}" ToolTip.Tip="Reload current page" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="toolbar-btn,ghost" Content="Export" Command="{Binding ExportDataCommand}" ToolTip.Tip="Export rows" />
+                <ComboBox Width="72" ItemsSource="{Binding ExportFormats}" SelectedItem="{Binding SelectedExportFormat}" />
+                <CheckBox Content="Full" IsChecked="{Binding ExportFullTable}" VerticalAlignment="Center" FontSize="11" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="toolbar-btn,ghost" Content="Import SQL" Command="{Binding ImportSqlCommand}" ToolTip.Tip="Import SQL script" />
+                <Button Classes="toolbar-btn,ghost" Content="Design" Click="OnOpenDesignPanelClick" ToolTip.Tip="Table design panel" />
+                <Button Classes="toolbar-btn,ghost" Content="Stop Edit" Command="{Binding DisableInlineEditCommand}" IsVisible="{Binding IsInlineEditMode}" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBox Width="260" Watermark="Filter (WHERE clause)..." Text="{Binding FilterText}" />
+                <Button Classes="toolbar-btn,primary" Content="Apply" Command="{Binding ApplyFilterCommand}" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="icon-btn" Content="&#x25C0;" Command="{Binding PreviousPageCommand}" ToolTip.Tip="Previous page" />
+                <TextBlock VerticalAlignment="Center" FontSize="12" Margin="4,0">
+                    <Run Text="{Binding CurrentPage}" />
+                    <Run Text=" / " />
+                    <Run Text="{Binding TotalPages}" />
+                </TextBlock>
+                <Button Classes="icon-btn" Content="&#x25B6;" Command="{Binding NextPageCommand}" ToolTip.Tip="Next page" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding TotalRows, StringFormat='{}{0} rows'}" Classes="muted" Margin="6,0,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Top" Classes="inline-info" IsVisible="{Binding IsInlineStatusVisible}">
+            <TextBlock Text="{Binding InlineEditStatus}" Foreground="{DynamicResource AccentGreen}" FontSize="11" />
+        </Border>
+
+        <TextBlock DockPanel.Dock="Top"
+                   Text="{Binding ErrorMessage}"
+                   Foreground="{DynamicResource Danger}"
+                   FontSize="12"
+                   Margin="8,4"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        <ProgressBar DockPanel.Dock="Top" IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="2" />
+
+        <DataGrid x:Name="ResultGrid"
+                  ItemsSource="{Binding Rows}"
+                  SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  IsReadOnly="{Binding IsGridReadOnly}">
+            <DataGrid.ContextMenu>
+                <ContextMenu x:Name="RowContextMenu">
+                    <MenuItem Header="Edit Row..." x:Name="MenuEditRow" />
+                    <MenuItem Header="Duplicate Row" x:Name="MenuDuplicateRow" />
+                    <MenuItem Header="Delete Row" x:Name="MenuDeleteRow" />
+                    <Separator />
+                    <MenuItem Header="Copy Row" x:Name="MenuCopyRow" />
+                    <Separator />
+                    <MenuItem Header="Set NULL (all editable)" x:Name="MenuSetNull" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+
+    </DockPanel>
+
+</UserControl>

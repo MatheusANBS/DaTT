@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DaTT.App.ViewModels"
+        x:Class="DaTT.App.Views.CreateTableWindow"
+        x:DataType="vm:CreateTableViewModel"
+        Title="Create Table"
+        Width="900" Height="640"
+        MinWidth="700" MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <DockPanel>
+
+        <!-- ─── Top Toolbar ──────────────────────────────────────── -->
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Table Name:" FontWeight="SemiBold" VerticalAlignment="Center" FontSize="12" />
+                <TextBox Width="220" Text="{Binding TableName}" FontSize="12" Watermark="my_table" />
+                <Border Width="1" Background="#3E3E42" Margin="4,4" />
+                <Button Classes="toolbar-btn,ghost" Content="+ Column" Command="{Binding AddColumnCommand}" ToolTip.Tip="Add a new column" />
+                <Button Classes="toolbar-btn,primary" Content="Generate SQL" Command="{Binding GenerateSqlCommand}" ToolTip.Tip="Generate CREATE TABLE script" />
+            </StackPanel>
+        </Border>
+
+        <!-- ─── Bottom Toolbar ───────────────────────────────────── -->
+        <Border DockPanel.Dock="Bottom" Classes="toolbar">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           Margin="8,0"
+                           Foreground="#CCCCCC" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                    <Button Classes="primary" Content="Create" MinWidth="80" Click="OnCreateClicked" />
+                    <Button Classes="ghost" Content="Cancel" MinWidth="80" Click="OnCancelClicked" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ─── Main Content ─────────────────────────────────────── -->
+        <Grid RowDefinitions="*,4,Auto">
+
+            <!-- ─── Column Definitions ───────────────────────────── -->
+            <Border Grid.Row="0" Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Classes="section-title" Text="COLUMNS" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Columns}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ColumnDefinition">
+                                    <Border Background="#252526" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+                                        <Grid ColumnDefinitions="*,*,Auto,Auto,*,Auto,Auto,Auto" RowDefinitions="Auto">
+                                            <TextBox Grid.Column="0" Text="{Binding Name}" Watermark="name" FontSize="12" Margin="0,0,4,0" />
+                                            <TextBox Grid.Column="1" Text="{Binding DataType}" Watermark="type" FontSize="12" Margin="0,0,4,0" />
+                                            <CheckBox Grid.Column="2" Content="NULL" IsChecked="{Binding IsNullable}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
+                                            <CheckBox Grid.Column="3" Content="PK" IsChecked="{Binding IsPrimaryKey}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
+                                            <TextBox Grid.Column="4" Text="{Binding DefaultValue}" Watermark="default" FontSize="12" Margin="0,0,4,0" />
+                                            <Button Grid.Column="5" Classes="icon-btn" Content="&#x25B2;"
+                                                    Command="{Binding $parent[Window].DataContext.MoveColumnUpCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Move up" Margin="0,0,2,0" />
+                                            <Button Grid.Column="6" Classes="icon-btn" Content="&#x25BC;"
+                                                    Command="{Binding $parent[Window].DataContext.MoveColumnDownCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="Move down" Margin="0,0,2,0" />
+                                            <Button Grid.Column="7" Classes="icon-btn" Content="&#xD7;"
+                                                    Command="{Binding $parent[Window].DataContext.RemoveColumnCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Foreground="{DynamicResource Danger}"
+                                                    ToolTip.Tip="Remove column" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="4" Background="Transparent" />
+
+            <!-- ─── SQL Preview ──────────────────────────────────── -->
+            <Border Grid.Row="2" Padding="8" MinHeight="140">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Classes="section-title" Text="SQL PREVIEW" />
+                    <TextBox Text="{Binding SqlPreview}"
+                             IsReadOnly="True"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             FontFamily="Consolas,Courier New,Monospace"
+                             FontSize="12"
+                             Background="#1E1E1E"
+                             BorderThickness="1"
+                             BorderBrush="#3E3E42"
+                             Padding="8"
+                             VerticalAlignment="Stretch" />
+                </DockPanel>
+            </Border>
+
+        </Grid>
+
+    </DockPanel>
+
+</Window>

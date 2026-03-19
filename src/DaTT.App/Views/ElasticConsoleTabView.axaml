@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DaTT.App.ViewModels"
+             x:Class="DaTT.App.Views.ElasticConsoleTabView"
+             x:DataType="vm:ElasticConsoleTabViewModel">
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <ComboBox Width="90" ItemsSource="{Binding HttpMethods}" SelectedItem="{Binding HttpMethod}" />
+                <TextBox Width="420" Text="{Binding RequestPath}" Watermark="/_cat/indices?format=json" />
+                <Button Classes="toolbar-btn,primary" Content="Run" Command="{Binding ExecuteRequestCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Format JSON" Command="{Binding FormatRequestBodyCommand}" />
+                <Button Classes="toolbar-btn,ghost" Content="Refresh Indices" Command="{Binding RefreshIndicesCommand}" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Danger}" FontSize="12"
+                           Margin="6,0" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="220,Auto,*">
+
+            <Border Grid.Column="0" Classes="sidebar">
+                <Grid RowDefinitions="Auto,*,Auto,Auto">
+                    <TextBlock Classes="section-title" Text="INDICES" />
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Indices}" SelectedItem="{Binding SelectedIndex}" Margin="4,0" />
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="2" Margin="8,4">
+                        <Button Classes="toolbar-btn,ghost" Content="Query" Command="{Binding QuerySelectedIndexCommand}" />
+                        <Button Classes="toolbar-btn,ghost" Content="Count" Command="{Binding CountSelectedIndexCommand}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" TextWrapping="Wrap" Classes="muted" Margin="12,4" />
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns" Width="4" Background="Transparent" />
+
+            <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
+                <TextBlock Classes="section-title" Text="REQUEST BODY" />
+                <TextBox Grid.Row="1"
+                         Text="{Binding RequestBody}"
+                         AcceptsReturn="True"
+                         Height="120"
+                         TextWrapping="Wrap"
+                         FontFamily="Consolas,Courier New,Monospace"
+                         FontSize="12"
+                         Watermark="Optional JSON body"
+                         Margin="8,0" />
+
+                <TextBox Grid.Row="2"
+                         Text="{Binding ResponseText}"
+                         AcceptsReturn="True"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         FontFamily="Consolas,Courier New,Monospace"
+                         FontSize="12"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="8" />
+            </Grid>
+
+        </Grid>
+
+    </DockPanel>
+
+</UserControl>

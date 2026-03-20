@@ -2,6 +2,12 @@
 
 ---
 
+## [1.3.0] - 2026-03-20
+
+### Testing
+
+- **Testing AutoUpdate** — Simulated update check and notification for testing purposes
+
 ## [1.2.9] - 2026-03-20
 
 ### Added

@@ -2,6 +2,12 @@
 
 ---
 
+## [1.2.3] - 2026-03-20
+
+### Hotfixes
+
+- **AutoUpdate Restart Hotfix** — Fixed an issue where DaTT did not relaunch after a silent in-app update.
+
 ## [1.2.2] - 2026-03-20
 
 ### Testing

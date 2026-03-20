@@ -142,11 +142,20 @@ public static class UpdateService
 
     public static void InstallAndRestart(string installerPath)
     {
+        var currentExe = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrWhiteSpace(currentExe))
+            throw new InvalidOperationException("Unable to resolve current executable path for restart.");
+
+        const string installerArgs = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS";
+        var cmdArgs = $"/C \"\"{installerPath}\" {installerArgs} & start \"\" \"{currentExe}\"\"";
+
         Process.Start(new ProcessStartInfo
         {
-            FileName = installerPath,
-            Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS",
-            UseShellExecute = true
+            FileName = "cmd.exe",
+            Arguments = cmdArgs,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            WindowStyle = ProcessWindowStyle.Hidden
         });
 
         Dispatcher.UIThread.InvokeAsync(() =>

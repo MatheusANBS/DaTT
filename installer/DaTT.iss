@@ -1,5 +1,5 @@
 ﻿#define MyAppName "DaTT"
-#define MyAppVersion "1.2.6"
+#define MyAppVersion "1.2.7"
 #define MyAppPublisher "DaTT"
 #define MyAppExeName "DaTT.App.exe"
 #define MyAppSourceDir "..\publish\win-x64"

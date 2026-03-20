@@ -16,13 +16,86 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 
+# ==============================================================================
+# Bootstrap: PATH extras (dotnet + scoop)
+# ==============================================================================
+
 $sdkDotnetDir = "C:\Program Files\dotnet"
 if ((Test-Path "$sdkDotnetDir\dotnet.exe") -and ($env:PATH -notlike "*$sdkDotnetDir*")) {
     $env:PATH = "$sdkDotnetDir;" + $env:PATH
 }
+
+$scoopShims = "$env:USERPROFILE\scoop\shims"
+if ((Test-Path $scoopShims) -and ($env:PATH -notlike "*$scoopShims*")) {
+    $env:PATH = "$scoopShims;" + $env:PATH
+}
+
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     Write-Host "  FAIL  dotnet not found. Install .NET SDK from https://aka.ms/dotnet/download" -ForegroundColor Red
     exit 1
+}
+
+# ==============================================================================
+# Bootstrap: gh CLI
+# ==============================================================================
+
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    Write-Host ""
+    Write-Host "  gh CLI not found. It is required to create GitHub Releases." -ForegroundColor Yellow
+    $adminChoice = Read-Host "  Do you have admin rights on this machine? (Y/n)"
+
+    if ($adminChoice -ne 'n' -and $adminChoice -ne 'N') {
+        Write-Host "  Installing gh via winget..." -ForegroundColor Cyan
+        winget install --id GitHub.cli --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  FAIL  winget install failed. Try manually: https://cli.github.com" -ForegroundColor Red
+            exit 1
+        }
+        # Refresh PATH from machine/user environment after winget installs
+        $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + `
+                    [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    } else {
+        Write-Host "  Installing via Scoop (no admin required)..." -ForegroundColor Cyan
+
+        if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+            Write-Host "  Installing Scoop..." -ForegroundColor Cyan
+            Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction SilentlyContinue
+            Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  FAIL  Scoop installation failed." -ForegroundColor Red
+                exit 1
+            }
+            if ((Test-Path $scoopShims) -and ($env:PATH -notlike "*$scoopShims*")) {
+                $env:PATH = "$scoopShims;" + $env:PATH
+            }
+        }
+
+        scoop install gh
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  FAIL  scoop install gh failed." -ForegroundColor Red
+            exit 1
+        }
+        if ((Test-Path $scoopShims) -and ($env:PATH -notlike "*$scoopShims*")) {
+            $env:PATH = "$scoopShims;" + $env:PATH
+        }
+    }
+
+    # Verify gh is now available
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Host "  FAIL  gh CLI still not found after installation. Restart the terminal and try again." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "  OK  gh CLI installed." -ForegroundColor Green
+
+    # Authenticate
+    Write-Host ""
+    Write-Host "  gh needs to be authenticated with your GitHub account." -ForegroundColor Yellow
+    gh auth login
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  FAIL  gh auth login failed." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "  OK  gh CLI authenticated." -ForegroundColor Green
 }
 
 function Write-Step([string]$msg) {

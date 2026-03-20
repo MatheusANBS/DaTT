@@ -2,6 +2,12 @@
 
 ---
 
+## [1.2.7] - 2026-03-20
+
+### Added
+
+- **Testing AutoUpdate** — Simulated update check and notification for testing purposes
+
 ## [1.2.6] - 2026-03-20
 
 ### Hotfixes

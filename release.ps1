@@ -209,6 +209,23 @@ if ($pushChoice -ne 'n' -and $pushChoice -ne 'N') {
     & git push origin $tagName
     Assert-LastExit "git push tag"
     Write-Ok "Pushed to origin"
+
+    # ==============================================================================
+    # 8. Create GitHub Release and upload installer
+    # ==============================================================================
+
+    Write-Step "Creating GitHub Release $tagName"
+
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Host "  gh CLI not found - skipping GitHub Release." -ForegroundColor Yellow
+        Write-Host "  Install from https://cli.github.com and re-run, or upload manually." -ForegroundColor Yellow
+    } else {
+        & gh release create $tagName $installerPath `
+            --title "DaTT v$Version" `
+            --notes-file "$Root\CHANGELOG.md"
+        Assert-LastExit "gh release create"
+        Write-Ok "GitHub Release created: $tagName  |  Asset: $(Split-Path $installerPath -Leaf)"
+    }
 }
 
 Pop-Location

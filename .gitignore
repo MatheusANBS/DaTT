@@ -1,3 +1,6 @@
+# Installer output (distributed as GitHub Release assets, not committed)
+installer/output/
+
 # Build results
 [Dd]ebug/
 [Rr]elease/

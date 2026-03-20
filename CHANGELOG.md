@@ -2,6 +2,14 @@
 
 ---
 
+## [1.2.6] - 2026-03-20
+
+### Hotfixes
+
+- **AutoUpdate** — Tested update check and notification for testing purposes
+
+-
+
 ## [1.2.5] - 2026-03-20
 
 ### Hotfixes

@@ -217,8 +217,25 @@ public partial class TreeNodeViewModel : ViewModelBase
     public ObservableCollection<TreeNodeViewModel> Children { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NodeIconKind))]
     private bool _isExpanded;
 
+    public Material.Icons.MaterialIconKind NodeIconKind => NodeType switch
+    {
+        TreeNodeType.Connection => IsExpanded
+            ? Material.Icons.MaterialIconKind.Server
+            : Material.Icons.MaterialIconKind.ServerOutline,
+        TreeNodeType.Schema     => Material.Icons.MaterialIconKind.DatabaseOutline,
+        TreeNodeType.Folder     => IsExpanded
+            ? Material.Icons.MaterialIconKind.FolderOpenOutline
+            : Material.Icons.MaterialIconKind.FolderOutline,
+        TreeNodeType.Table      => Material.Icons.MaterialIconKind.TableLarge,
+        TreeNodeType.View       => Material.Icons.MaterialIconKind.TableEye,
+        TreeNodeType.Procedure  => Material.Icons.MaterialIconKind.CodeBraces,
+        _                       => Material.Icons.MaterialIconKind.Database
+    };
+
+    // Remove string NodeIcon — replaced by MaterialIconKind above
     public TreeNodeViewModel(string label, TreeNodeType nodeType)
     {
         Label = label;

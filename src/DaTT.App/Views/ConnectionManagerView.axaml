@@ -15,6 +15,7 @@
                 <ListBox Grid.Row="1"
                          ItemsSource="{Binding Connections}"
                          SelectedItem="{Binding SelectedConnection}"
+                         DoubleTapped="OnConnectionDoubleTapped"
                          Margin="4,0">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:ConnectionConfig">

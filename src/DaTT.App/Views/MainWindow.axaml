@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DaTT.App.ViewModels"
+        xmlns:mi="using:Material.Icons.Avalonia"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
@@ -18,7 +19,9 @@
         <Border Grid.Row="0" Classes="toolbar">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <StackPanel Orientation="Horizontal" Spacing="2">
-                    <Button Classes="toolbar-btn" Content="&#x2630;" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Toggle explorer" />
+                    <Button Classes="toolbar-btn" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Toggle explorer">
+                        <Button.Content><mi:MaterialIcon Kind="Menu" Width="16" Height="16" /></Button.Content>
+                    </Button>
                     <Border Width="1" Background="#3E3E42" Margin="4,4" />
                     <Button Classes="toolbar-btn,ghost" Content="Connections" Command="{Binding OpenConnectionManagerCommand}" />
                     <Button Classes="toolbar-btn,primary" Content="Connect" Command="{Binding ConnectCommand}" />
@@ -62,7 +65,13 @@
                     <TreeView Margin="4,0"
                               ItemsSource="{Binding ObjectExplorer.RootNodes}"
                               SelectedItem="{Binding ObjectExplorer.SelectedNode, Mode=TwoWay}"
+                              Tapped="OnTreeTapped"
                               DoubleTapped="OnTreeDoubleTapped">
+                        <TreeView.Styles>
+                            <Style Selector="TreeViewItem" x:DataType="vm:TreeNodeViewModel">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            </Style>
+                        </TreeView.Styles>
                         <TreeView.ContextMenu>
                             <ContextMenu Opening="OnTreeContextMenuOpening">
                                 <MenuItem x:Name="MenuOpenTable" Header="Open Table" Click="OnOpenTableClick" />
@@ -97,7 +106,19 @@
                         </TreeView.ContextMenu>
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate x:DataType="vm:TreeNodeViewModel" ItemsSource="{Binding Children}">
-                                <TextBlock Text="{Binding Label}" Padding="4,2" FontSize="12" />
+                                <Grid ColumnDefinitions="18,*" Margin="0,1" Background="Transparent">
+                                    <mi:MaterialIcon Grid.Column="0"
+                                                     Kind="{Binding NodeIconKind}"
+                                                     Width="16" Height="16"
+                                                     VerticalAlignment="Center"
+                                                     HorizontalAlignment="Center"
+                                                     Foreground="{DynamicResource TreeIconFg}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Label}"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               Margin="5,0,4,0" />
+                                </Grid>
                             </TreeDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
@@ -113,9 +134,11 @@
                         <DataTemplate x:DataType="vm:TabViewModel">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12" />
-                                <Button Classes="tab-close" Content="&#xD7;"
+                                <Button Classes="tab-close"
                                         Command="{Binding $parent[Window].DataContext.CloseTabCommand}"
-                                        CommandParameter="{Binding}" />
+                                        CommandParameter="{Binding}">
+                                    <Button.Content><mi:MaterialIcon Kind="Close" Width="12" Height="12" /></Button.Content>
+                                </Button>
                             </StackPanel>
                         </DataTemplate>
                     </TabControl.ItemTemplate>

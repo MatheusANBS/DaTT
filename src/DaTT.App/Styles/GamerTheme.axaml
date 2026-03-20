@@ -23,6 +23,8 @@
     <SolidColorBrush x:Key="SelectionBg" Color="#094771" />
     <SolidColorBrush x:Key="HoverBg" Color="#2A2D2E" />
     <SolidColorBrush x:Key="FocusBorder" Color="#007FD4" />
+    <!-- Tree node icon colours (match VS Code dark) -->
+    <SolidColorBrush x:Key="TreeIconFg" Color="#75BEFF" />
   </Styles.Resources>
 
   <!-- ─── Window ─────────────────────────────────────────────── -->
@@ -222,6 +224,18 @@
     <Setter Property="FontSize" Value="12" />
   </Style>
 
+  <!-- Selected row: very subtle so the current-cell indicator stands out -->
+  <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+    <Setter Property="Opacity" Value="0.18" />
+  </Style>
+
+  <!-- Current (focused) cell: accent border on all sides + soft fill -->
+  <Style Selector="DataGridCell:current">
+    <Setter Property="Background" Value="#12304A" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBlue}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
   <!-- ─── TabControl ─────────────────────────────────────────── -->
   <Style Selector="TabControl">
     <Setter Property="Background" Value="Transparent" />
@@ -250,15 +264,35 @@
   <!-- ─── TreeView ───────────────────────────────────────────── -->
   <Style Selector="TreeView">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0,4,0,4" />
   </Style>
 
+  <!-- Make the entire row the click / hover target -->
   <Style Selector="TreeViewItem">
     <Setter Property="Padding" Value="0" />
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="MinHeight" Value="26" />
+    <!-- Stretch the layout root so the full-width row is the target -->
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="Transparent" />
+    <!-- Ensure it fills the entire sidebar width -->
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="TreeViewItem:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource HoverBg}" />
   </Style>
 
   <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
     <Setter Property="Background" Value="{DynamicResource SelectionBg}" />
+  </Style>
+
+  <Style Selector="TreeViewItem:selected:pointerover /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="#0F5A8B" />
   </Style>
 
   <!-- ─── Expander ───────────────────────────────────────────── -->

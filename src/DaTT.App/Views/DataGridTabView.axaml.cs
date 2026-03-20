@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -14,6 +15,8 @@ using Avalonia.VisualTree;
 using DaTT.App.Infrastructure;
 using DaTT.App.ViewModels;
 using DaTT.Core.Models;
+using Material.Icons;
+using Material.Icons.Avalonia;
 
 namespace DaTT.App.Views;
 
@@ -21,7 +24,8 @@ public partial class DataGridTabView : UserControl
 {
     private DataGridTabViewModel? _vm;
     private DataGrid? _wiredGrid;
-    private readonly Dictionary<string, TextBlock> _sortIndicators = [];
+    private readonly Dictionary<string, MaterialIcon> _sortIndicators = [];
+    private readonly Dictionary<string, Button> _filterButtons = [];
     private readonly Dictionary<string, DataGridTemplateColumn> _columnMap = [];
 
     public DataGridTabView()
@@ -35,6 +39,7 @@ public partial class DataGridTabView : UserControl
         if (_vm is not null)
         {
             _vm.ColumnNames.CollectionChanged -= OnColumnNamesChanged;
+            _vm.PropertyChanged -= OnVmPropertyChanged;
             _vm.ShowEditDialog    = null;
             _vm.ShowExpandDialog  = null;
             _vm.ShowCellEditDialog = null;
@@ -49,6 +54,7 @@ public partial class DataGridTabView : UserControl
         if (_vm is null) return;
 
         _vm.ColumnNames.CollectionChanged += OnColumnNamesChanged;
+        _vm.PropertyChanged += OnVmPropertyChanged;
         _vm.ShowEditDialog    = ShowEditDialogAsync;
         _vm.ShowExpandDialog  = ShowExpandDialogAsync;
         _vm.ShowCellEditDialog = ShowCellEditDialogAsync;
@@ -83,6 +89,7 @@ public partial class DataGridTabView : UserControl
         if (grid is null || _vm is null) return;
 
         _sortIndicators.Clear();
+        _filterButtons.Clear();
         _columnMap.Clear();
         grid.Columns.Clear();
 
@@ -159,19 +166,22 @@ public partial class DataGridTabView : UserControl
 
         ApplyColumnDisplayOrder();
         UpdateSortIndicators();
+        UpdateFilterIndicators();
     }
 
-    private static (Control Header, TextBlock Indicator) BuildSortableHeader(
+    // Remove 'static' — now needs access to _filterButtons and _vm
+    private (Control Header, MaterialIcon Indicator) BuildSortableHeader(
         string columnName, ColumnMeta? meta, Action onDropColumn, Action onSort)
     {
         var dropItem = new MenuItem { Header = $"Drop column '{columnName}'" };
         dropItem.Foreground = new SolidColorBrush(Color.Parse("#F44747"));
         dropItem.Click += (_, _) => onDropColumn();
 
-        var indicator = new TextBlock
+        var indicator = new MaterialIcon
         {
-            Text = "⇅",
-            FontSize = 10,
+            Kind = MaterialIconKind.ArrowUpDown,
+            Width = 14,
+            Height = 14,
             Foreground = new SolidColorBrush(Color.Parse("#888888")),
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.4
@@ -195,13 +205,11 @@ public partial class DataGridTabView : UserControl
             }
         };
 
-        var header = new StackPanel
+        var inner = new StackPanel
         {
             Orientation = Orientation.Vertical,
             Spacing = 1,
             VerticalAlignment = VerticalAlignment.Center,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            ContextMenu = new ContextMenu { Items = { dropItem } },
             Children = { topRow }
         };
 
@@ -238,10 +246,116 @@ public partial class DataGridTabView : UserControl
                 });
             }
 
-            header.Children.Add(infoRow);
+            inner.Children.Add(infoRow);
         }
 
-        // Left-click triggers sort (right-click is handled by the ContextMenu)
+        // ── Per-column filter flyout ──────────────────────────────────────
+        var filterInput = new TextBox
+        {
+            Watermark = "Filter value...",
+            Width = 190,
+            FontSize = 12
+        };
+
+        var flyoutApplyBtn = new Button
+        {
+            Content = "Apply",
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        flyoutApplyBtn.Classes.Add("toolbar-btn");
+        flyoutApplyBtn.Classes.Add("primary");
+
+        var flyoutClearBtn = new Button
+        {
+            Content = "Clear filter",
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        flyoutClearBtn.Classes.Add("toolbar-btn");
+
+        var flyout = new Flyout
+        {
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Spacing = 6,
+                Margin = new Thickness(4),
+                Children = { filterInput, flyoutApplyBtn, flyoutClearBtn }
+            }
+        };
+
+        flyout.Opening += (_, _) =>
+        {
+            filterInput.Text = (_vm?.FilterColumn == columnName) ? _vm.FilterValue : string.Empty;
+            filterInput.Focus();
+        };
+
+        flyoutApplyBtn.Click += (_, _) =>
+        {
+            if (_vm is null) return;
+            _vm.FilterColumn = columnName;
+            _vm.FilterValue = filterInput.Text ?? string.Empty;
+            flyout.Hide();
+            _ = _vm.ApplyFilterCommand.ExecuteAsync(null);
+            UpdateFilterIndicators();
+        };
+
+        flyoutClearBtn.Click += (_, _) =>
+        {
+            filterInput.Text = string.Empty;
+            flyout.Hide();
+            if (_vm is null) return;
+            _ = _vm.ClearFilterCommand.ExecuteAsync(null);
+            UpdateFilterIndicators();
+        };
+
+        filterInput.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+                flyoutApplyBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        };
+
+        var filterBtn = new Button
+        {
+            Content = new MaterialIcon { Kind = MaterialIconKind.FilterOutline, Width = 14, Height = 14 },
+            Padding = new Thickness(4, 2),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = new SolidColorBrush(Color.Parse("#555555")),
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Flyout = flyout,
+            Opacity = 0.5
+        };
+        ToolTip.SetTip(filterBtn, $"Filter by {columnName}");
+        // Stop event bubbling so clicking the filter btn doesn't also fire sort
+        filterBtn.PointerReleased += (_, e) => e.Handled = true;
+        _filterButtons[columnName] = filterBtn;
+
+        // Grid: inner content left | filter button right
+        var outerGrid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        outerGrid.Children.Add(inner);
+        outerGrid.Children.Add(filterBtn);
+        Grid.SetColumn(inner, 0);
+        Grid.SetColumn(filterBtn, 1);
+
+        // Wrap in a full-width Border so the entire header cell area is hit-testable
+        var header = new Border
+        {
+            Background = Brushes.Transparent,
+            Padding = new Thickness(4, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            ContextMenu = new ContextMenu { Items = { dropItem } },
+            Child = outerGrid
+        };
+
+        // Left-click triggers sort (filter button stops bubbling)
         header.PointerReleased += (_, e) =>
         {
             if (e.InitialPressMouseButton == MouseButton.Left)
@@ -265,17 +379,40 @@ public partial class DataGridTabView : UserControl
         {
             if (colName == _vm.SortColumn)
             {
-                indicator.Text = _vm.SortAscending == true ? "↑" : "↓";
+                indicator.Kind = _vm.SortAscending == true ? MaterialIconKind.ArrowUp : MaterialIconKind.ArrowDown;
                 indicator.Opacity = 1.0;
                 indicator.Foreground = new SolidColorBrush(Color.Parse("#007ACC"));
             }
             else
             {
-                indicator.Text = "⇅";
+                indicator.Kind = MaterialIconKind.ArrowUpDown;
                 indicator.Opacity = 0.4;
                 indicator.Foreground = new SolidColorBrush(Color.Parse("#888888"));
             }
         }
+    }
+
+    private void UpdateFilterIndicators()
+    {
+        if (_vm is null) return;
+        var activeCol = _vm.FilterColumn;
+        var hasFilter = !string.IsNullOrWhiteSpace(_vm.FilterValue);
+
+        foreach (var (colName, btn) in _filterButtons)
+        {
+            var isActive = hasFilter && colName == activeCol;
+            btn.Foreground = isActive
+                ? new SolidColorBrush(Color.Parse("#007ACC"))
+                : new SolidColorBrush(Color.Parse("#555555"));
+            btn.Opacity = isActive ? 1.0 : 0.5;
+        }
+    }
+
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DataGridTabViewModel.FilterColumn)
+                           or nameof(DataGridTabViewModel.FilterValue))
+            UpdateFilterIndicators();
     }
 
     private void ApplyColumnDisplayOrder()
@@ -404,8 +541,7 @@ public partial class DataGridTabView : UserControl
             // Small calendar trigger button
             var triggerBtn = new Button
             {
-                Content = "📅",
-                FontSize = 11,
+                Content = new MaterialIcon { Kind = MaterialIconKind.Calendar, Width = 14, Height = 14 },
                 Padding = new Thickness(5, 2),
                 Margin = new Thickness(2, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -449,7 +585,7 @@ public partial class DataGridTabView : UserControl
                 Child = popupBorder,
                 PlacementMode = PlacementMode.Bottom,
                 PlacementTarget = triggerBtn,
-                IsLightDismissEnabled = true
+                IsLightDismissEnabled = false
             };
 
             triggerBtn.Click += (_, _) => popup.IsOpen = !popup.IsOpen;
@@ -466,7 +602,16 @@ public partial class DataGridTabView : UserControl
             root.Children.Add(triggerBtn);
             root.Children.Add(popup);
 
+            // Close popup when cell exits edit mode (e.g. user commits or navigates away)
+            root.DetachedFromVisualTree += (_, _) => popup.IsOpen = false;
+
             bool initializing = false;
+
+            // Auto-open the popup as soon as the editing template is shown
+            root.AttachedToVisualTree += (_, _) =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(
+                    () => popup.IsOpen = true,
+                    Avalonia.Threading.DispatcherPriority.Background);
 
             root.DataContextChanged += (_, _) =>
             {
@@ -625,9 +770,17 @@ public partial class DataGridTabView : UserControl
         if (columnIndex < 0 || columnIndex >= row.Cells.Length) return;
 
         if (row.Cells[columnIndex].IsJson)
+        {
             _vm?.EditCellCommand.Execute(new CellEditRequest(row, columnIndex));
-        else
-            _vm?.EnableInlineEditCommand.Execute(new CellEditRequest(row, columnIndex));
+            return;
+        }
+
+        // Enable inline edit on first double-click, then go straight into cell edit
+        if (_vm?.IsInlineEditMode == false)
+            _vm.EnableInlineEditCommand.Execute(new CellEditRequest(row, columnIndex));
+
+        // Immediately enter editing mode for the current cell
+        grid.BeginEdit();
     }
 
     private void OnGridButtonClick(object? sender, RoutedEventArgs e)

@@ -11,6 +11,7 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://Material.Icons.Avalonia/MaterialIconStyles.axaml" />
         <StyleInclude Source="/Styles/GamerTheme.axaml" />
     </Application.Styles>
 </Application>

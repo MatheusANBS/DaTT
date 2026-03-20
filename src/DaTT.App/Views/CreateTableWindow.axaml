@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DaTT.App.ViewModels"
+        xmlns:mi="using:Material.Icons.Avalonia"
         x:Class="DaTT.App.Views.CreateTableWindow"
         x:DataType="vm:CreateTableViewModel"
         Title="Create Table"
@@ -66,19 +67,25 @@
                                             <CheckBox Grid.Column="2" Content="NULL" IsChecked="{Binding IsNullable}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
                                             <CheckBox Grid.Column="3" Content="PK" IsChecked="{Binding IsPrimaryKey}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
                                             <TextBox Grid.Column="4" Text="{Binding DefaultValue}" Watermark="default" FontSize="12" Margin="0,0,4,0" />
-                                            <Button Grid.Column="5" Classes="icon-btn" Content="&#x25B2;"
+                                            <Button Grid.Column="5" Classes="icon-btn"
                                                     Command="{Binding $parent[Window].DataContext.MoveColumnUpCommand}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip.Tip="Move up" Margin="0,0,2,0" />
-                                            <Button Grid.Column="6" Classes="icon-btn" Content="&#x25BC;"
+                                                    ToolTip.Tip="Move up" Margin="0,0,2,0">
+                                                <Button.Content><mi:MaterialIcon Kind="ArrowUp" Width="14" Height="14" /></Button.Content>
+                                            </Button>
+                                            <Button Grid.Column="6" Classes="icon-btn"
                                                     Command="{Binding $parent[Window].DataContext.MoveColumnDownCommand}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip.Tip="Move down" Margin="0,0,2,0" />
-                                            <Button Grid.Column="7" Classes="icon-btn" Content="&#xD7;"
+                                                    ToolTip.Tip="Move down" Margin="0,0,2,0">
+                                                <Button.Content><mi:MaterialIcon Kind="ArrowDown" Width="14" Height="14" /></Button.Content>
+                                            </Button>
+                                            <Button Grid.Column="7" Classes="icon-btn"
                                                     Command="{Binding $parent[Window].DataContext.RemoveColumnCommand}"
                                                     CommandParameter="{Binding}"
                                                     Foreground="{DynamicResource Danger}"
-                                                    ToolTip.Tip="Remove column" />
+                                                    ToolTip.Tip="Remove column">
+                                                <Button.Content><mi:MaterialIcon Kind="Close" Width="14" Height="14" /></Button.Content>
+                                            </Button>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

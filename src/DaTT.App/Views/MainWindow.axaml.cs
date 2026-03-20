@@ -54,25 +54,43 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private async void OnTreeDoubleTapped(object? sender, TappedEventArgs e)
+    private async void OnTreeTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm) return;
 
-        var node = (e.Source as Control)?.DataContext as TreeNodeViewModel
-                ?? ((e.Source as Control)?.Parent as Control)?.DataContext as TreeNodeViewModel;
-
+        var node = ResolveTreeNode(e.Source as Avalonia.Visual);
         if (node is null) return;
 
-        // Expand schema node on double-click (lazy-load its tables/views)
-        if (node.NodeType == TreeNodeType.Schema)
+        if (node.NodeType is TreeNodeType.Schema or TreeNodeType.Folder or TreeNodeType.Connection)
         {
-            await vm.ObjectExplorer.ExpandSchemaNodeAsync(node);
-            node.IsExpanded = true;
-            return;
-        }
+            if (node.NodeType == TreeNodeType.Schema)
+                await vm.ObjectExplorer.ExpandSchemaNodeAsync(node);
 
-        if (node.NodeType == TreeNodeType.Table)
+            node.IsExpanded = !node.IsExpanded;
+        }
+    }
+
+    private void OnTreeDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+
+        var node = ResolveTreeNode(e.Source as Avalonia.Visual);
+        if (node is null) return;
+
+        if (node.NodeType is TreeNodeType.Table or TreeNodeType.View)
             vm.OpenTableCommand.Execute(node);
+    }
+
+    // Walk up from the tapped element to find the TreeNodeViewModel.
+    // Returns null if the tap landed on the native expand-toggle button.
+    private static TreeNodeViewModel? ResolveTreeNode(Avalonia.Visual? source)
+    {
+        for (var c = source as Control; c is not null; c = c.Parent as Control)
+        {
+            if (c is Avalonia.Controls.Primitives.ToggleButton) return null;
+            if (c.DataContext is TreeNodeViewModel node) return node;
+        }
+        return null;
     }
 
     private void OnTreeContextMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)

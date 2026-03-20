@@ -15,6 +15,9 @@ public sealed class FieldEdit : ObservableObject
     public bool IsTimeOnlyField { get; }
     public bool IsTextInput => !IsDateTimeField && !IsDateOnlyField && !IsTimeOnlyField;
 
+    // Read-only only when editing an existing row's PK — never in Insert mode
+    public bool IsReadOnly { get; }
+
     private string _value;
     public string Value
     {
@@ -74,11 +77,12 @@ public sealed class FieldEdit : ObservableObject
         return (isDateTime, isDate, isTime);
     }
 
-    public FieldEdit(string columnName, string dataType, bool isPrimaryKey, string currentValue)
+    public FieldEdit(string columnName, string dataType, bool isPrimaryKey, string currentValue, bool isInsertMode = false)
     {
         ColumnName = columnName;
         DataType = dataType;
         IsPrimaryKey = isPrimaryKey;
+        IsReadOnly = isPrimaryKey && !isInsertMode;
         _value = currentValue;
 
         (IsDateTimeField, IsDateOnlyField, IsTimeOnlyField) = DetectKind(dataType);
@@ -130,7 +134,8 @@ public sealed class EditRowViewModel : ViewModelBase
                 columnNames[i],
                 dataTypes.Count > i ? dataTypes[i] : "text",
                 pkFlags.Count > i && pkFlags[i],
-                currentValue
+                currentValue,
+                isInsertMode: mode == "Insert"
             ));
         }
     }

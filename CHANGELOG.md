@@ -2,6 +2,19 @@
 
 ---
 
+
+## [1.4.0] - 2026-03-20
+
+### Added
+
+- **Material Icons** — Added Material Icons package to the project and included icon styles in App.axaml.
+- **GamerTheme.axaml** — Updated with new styles for DataGrid and TreeView components.
+- **DataGridTabView** — Enhanced with filtering capabilities and integrated Material Icons for toolbar buttons.
+- **ConnectionManagerView** — Improved with double-tap functionality for connections.
+- **CreateTableWindow** — Modified to use Material Icons for action buttons.
+- **MainWindow** and **ObjectExplorerViewModel** — Updated to utilize Material Icons for better visual representation.
+- **EditRowViewModel** — Refactored to support read-only fields for primary keys during editing.
+
 ## [1.3.1] - 2026-03-20
 
 ### Added

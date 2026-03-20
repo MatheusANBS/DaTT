@@ -5,8 +5,8 @@
         x:DataType="vm:EditRowViewModel"
         Title="{Binding Mode}"
         Icon="/Assets/IconDaTT.ico"
-        Width="540" Height="600"
-        MinWidth="400" MinHeight="300"
+        Width="640" Height="640"
+        MinWidth="480" MinHeight="320"
         WindowStartupLocation="CenterOwner"
         CanResize="True">
 
@@ -39,27 +39,27 @@
                             <Panel Grid.Column="2" VerticalAlignment="Center">
                                 <TextBox Text="{Binding Value}"
                                          IsVisible="{Binding IsTextInput}"
-                                         IsReadOnly="{Binding IsPrimaryKey}"
-                                         Opacity="{Binding IsPrimaryKey, Converter={x:Static vm:BoolToOpacityConverter.Instance}}"
+                                         IsReadOnly="{Binding IsReadOnly}"
+                                         Opacity="{Binding IsReadOnly, Converter={x:Static vm:BoolToOpacityConverter.Instance}}"
                                          AcceptsReturn="True"
                                          MaxHeight="80" />
                                 <StackPanel Orientation="Horizontal" Spacing="4"
                                             IsVisible="{Binding IsDateTimeField}">
                                     <CalendarDatePicker SelectedDate="{Binding DatePart, Mode=TwoWay}"
-                                                        IsEnabled="{Binding IsPrimaryKey, Converter={x:Static vm:InverseBoolConverter.Instance}}"
-                                                        Width="160" FontSize="12" />
+                                                        IsEnabled="{Binding IsReadOnly, Converter={x:Static vm:InverseBoolConverter.Instance}}"
+                                                        Width="180" FontSize="12" />
                                     <TimePicker SelectedTime="{Binding TimePart, Mode=TwoWay}"
-                                                IsEnabled="{Binding IsPrimaryKey, Converter={x:Static vm:InverseBoolConverter.Instance}}"
-                                                Width="140" FontSize="12" />
+                                                IsEnabled="{Binding IsReadOnly, Converter={x:Static vm:InverseBoolConverter.Instance}}"
+                                                Width="160" FontSize="12" />
                                 </StackPanel>
                                 <CalendarDatePicker SelectedDate="{Binding DatePart, Mode=TwoWay}"
                                                     IsVisible="{Binding IsDateOnlyField}"
-                                                    IsEnabled="{Binding IsPrimaryKey, Converter={x:Static vm:InverseBoolConverter.Instance}}"
-                                                    Width="160" FontSize="12" />
+                                                    IsEnabled="{Binding IsReadOnly, Converter={x:Static vm:InverseBoolConverter.Instance}}"
+                                                    Width="180" FontSize="12" />
                                 <TimePicker SelectedTime="{Binding TimePart, Mode=TwoWay}"
                                             IsVisible="{Binding IsTimeOnlyField}"
-                                            IsEnabled="{Binding IsPrimaryKey, Converter={x:Static vm:InverseBoolConverter.Instance}}"
-                                            Width="140" FontSize="12" />
+                                            IsEnabled="{Binding IsReadOnly, Converter={x:Static vm:InverseBoolConverter.Instance}}"
+                                            Width="160" FontSize="12" />
                             </Panel>
                         </Grid>
                     </DataTemplate>

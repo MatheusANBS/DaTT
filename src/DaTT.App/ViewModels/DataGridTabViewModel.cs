@@ -34,6 +34,9 @@ public partial class DataGridTabViewModel : TabViewModel
     [ObservableProperty] private int _totalPages = 1;
     [ObservableProperty] private int _totalRows;
     [ObservableProperty] private string _filterText = string.Empty;
+    [ObservableProperty] private string? _filterColumn;
+    [ObservableProperty] private string _filterValue = string.Empty;
+    public ObservableCollection<string> FilterColumns { get; } = [];
     [ObservableProperty] private GridRow? _selectedRow;
     [ObservableProperty] private bool _isInlineEditMode;
     [ObservableProperty] private string _inlineEditStatus = "Double-click a cell to enable inline editing.";
@@ -106,8 +109,12 @@ public partial class DataGridTabViewModel : TabViewModel
             AppLog.Info($"Structure OK — {_columnInfos.Count} columns");
 
             ColumnNames.Clear();
+            FilterColumns.Clear();
             foreach (var col in _columnInfos)
+            {
                 ColumnNames.Add(col.Name);
+                FilterColumns.Add(col.Name);
+            }
 
             await LoadPageAsync(1, cancellationToken);
         }
@@ -133,7 +140,49 @@ public partial class DataGridTabViewModel : TabViewModel
         ? LoadPageAsync(CurrentPage - 1) : Task.CompletedTask;
 
     [RelayCommand]
-    private Task ApplyFilterAsync() => LoadPageAsync(1);
+    private Task ApplyFilterAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(FilterValue))
+        {
+            var escaped = FilterValue.Replace("'", "''");
+            var isPostgres = _provider.EngineName.Contains("postgres", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(FilterColumn))
+            {
+                // Single-column filtered search
+                var col = QuoteSqlIdentifier(FilterColumn);
+                FilterText = isPostgres
+                    ? $"CAST({col} AS TEXT) ILIKE '%{escaped}%'"
+                    : $"CAST({col} AS CHAR) LIKE '%{escaped}%'";
+            }
+            else
+            {
+                // Global search — searches every column
+                var clauses = _columnInfos.Select(c =>
+                {
+                    var col = QuoteSqlIdentifier(c.Name);
+                    return isPostgres
+                        ? $"CAST({col} AS TEXT) ILIKE '%{escaped}%'"
+                        : $"CAST({col} AS CHAR) LIKE '%{escaped}%'";
+                });
+                FilterText = string.Join(" OR ", clauses);
+            }
+        }
+        else
+        {
+            FilterText = string.Empty;
+        }
+        return LoadPageAsync(1);
+    }
+
+    [RelayCommand]
+    private Task ClearFilterAsync()
+    {
+        FilterColumn = null;
+        FilterValue = string.Empty;
+        FilterText = string.Empty;
+        return LoadPageAsync(1);
+    }
 
     private async Task LoadPageAsync(int page, CancellationToken cancellationToken = default)
     {
@@ -214,8 +263,11 @@ public partial class DataGridTabViewModel : TabViewModel
 
         try
         {
-            await _provider.InsertRowAsync(_tableName, ConvertEditFields(vm.Fields));
-            await LoadPageAsync(CurrentPage);
+            // Exclude PK columns with no value so the DB auto-assigns them (serial / IDENTITY)
+            var insertFields = vm.Fields.Where(f => !f.IsPrimaryKey || !string.IsNullOrWhiteSpace(f.Value));
+            await _provider.InsertRowAsync(_tableName, ConvertEditFields(insertFields));
+            await LoadPageAsync(1);            // refreshes TotalPages
+            await LoadPageAsync(TotalPages);  // jump to last page where new row appears
         }
         catch (Exception ex)
         {
@@ -226,18 +278,19 @@ public partial class DataGridTabViewModel : TabViewModel
     [RelayCommand]
     private async Task DuplicateRowAsync(GridRow row)
     {
-        // Build insert values from existing row but strip PK columns so DB auto-assigns
-        var values = new Dictionary<string, object?>();
-        for (int i = 0; i < _columnInfos.Count && i < row.Cells.Length; i++)
-        {
-            if (!_columnInfos[i].IsPrimaryKey)
-                values[_columnInfos[i].Name] = row.RawValue(i) is DBNull ? null : row.RawValue(i);
-        }
+        // Open the Insert modal pre-filled with the existing row's values
+        var vm = BuildEditViewModel("Insert", row);
+        if (ShowEditDialog is not null)
+            await ShowEditDialog(vm);
+
+        if (!vm.Confirmed) return;
 
         try
         {
-            await _provider.InsertRowAsync(_tableName, values);
-            await LoadPageAsync(CurrentPage);
+            var insertFields = vm.Fields.Where(f => !f.IsPrimaryKey || !string.IsNullOrWhiteSpace(f.Value));
+            await _provider.InsertRowAsync(_tableName, ConvertEditFields(insertFields));
+            await LoadPageAsync(1);
+            await LoadPageAsync(TotalPages);
         }
         catch (Exception ex)
         {
@@ -587,8 +640,8 @@ public partial class DataGridTabViewModel : TabViewModel
     private void FilterByCell(CellInfo cell)
     {
         if (_columnInfos.Count <= cell.Index) return;
-        var col = _columnInfos[cell.Index].Name;
-        FilterText = $"{col} = '{cell.FullText.Replace("'", "''")}'";
+        FilterColumn = _columnInfos[cell.Index].Name;
+        FilterValue = cell.FullText;
         _ = ApplyFilterAsync();
     }
 

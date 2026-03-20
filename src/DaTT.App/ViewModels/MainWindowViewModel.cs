@@ -69,6 +69,32 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task CloseAllTabsAsync()
+    {
+        var tabs = OpenTabs.ToList();
+        foreach (var tab in tabs)
+        {
+            if (tab is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+        }
+        OpenTabs.Clear();
+        ActiveTab = null;
+    }
+
+    [RelayCommand]
+    private async Task CloseOtherTabsAsync(TabViewModel keepTab)
+    {
+        var toClose = OpenTabs.Where(t => t != keepTab).ToList();
+        foreach (var tab in toClose)
+        {
+            if (tab is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+            OpenTabs.Remove(tab);
+        }
+        ActiveTab = keepTab;
+    }
+
+    [RelayCommand]
     private async Task ConnectAsync()
     {
         try

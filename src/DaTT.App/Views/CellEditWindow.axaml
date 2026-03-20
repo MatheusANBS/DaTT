@@ -4,6 +4,7 @@
         x:Class="DaTT.App.Views.CellEditWindow"
         x:DataType="vm:CellEditViewModel"
         Title="Edit Cell"
+        Icon="/Assets/IconDaTT.ico"
         Width="760" Height="560"
         MinWidth="520" MinHeight="360"
         WindowStartupLocation="CenterOwner"

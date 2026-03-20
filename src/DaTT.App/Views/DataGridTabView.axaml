@@ -17,7 +17,7 @@
                 <CheckBox Content="Full" IsChecked="{Binding ExportFullTable}" VerticalAlignment="Center" FontSize="11" />
                 <Border Width="1" Background="#3E3E42" Margin="4,4" />
                 <Button Classes="toolbar-btn,ghost" Content="Import SQL" Command="{Binding ImportSqlCommand}" ToolTip.Tip="Import SQL script" />
-                <Button Classes="toolbar-btn,ghost" Content="Design" Click="OnOpenDesignPanelClick" ToolTip.Tip="Table design panel" />
+                <Button Classes="toolbar-btn,ghost" Content="&#x2630; Reorder" Click="OnReorderColumnsClick" ToolTip.Tip="Drag-and-drop column order" />
                 <Button Classes="toolbar-btn,ghost" Content="Stop Edit" Command="{Binding DisableInlineEditCommand}" IsVisible="{Binding IsInlineEditMode}" />
             </StackPanel>
         </Border>
@@ -54,9 +54,10 @@
         <DataGrid x:Name="ResultGrid"
                   ItemsSource="{Binding Rows}"
                   SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                  SelectionMode="Extended"
                   AutoGenerateColumns="False"
                   CanUserResizeColumns="True"
-                  CanUserSortColumns="True"
+                  CanUserSortColumns="False"
                   IsReadOnly="{Binding IsGridReadOnly}">
             <DataGrid.ContextMenu>
                 <ContextMenu x:Name="RowContextMenu">
@@ -66,7 +67,7 @@
                     <Separator />
                     <MenuItem Header="Copy Row" x:Name="MenuCopyRow" />
                     <Separator />
-                    <MenuItem Header="Set NULL (all editable)" x:Name="MenuSetNull" />
+                    <MenuItem Header="Set Values..." x:Name="MenuSetValues" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>

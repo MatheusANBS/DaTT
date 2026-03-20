@@ -4,6 +4,7 @@
         x:Class="DaTT.App.Views.CreateTableWindow"
         x:DataType="vm:CreateTableViewModel"
         Title="Create Table"
+        Icon="/Assets/IconDaTT.ico"
         Width="900" Height="640"
         MinWidth="700" MinHeight="500"
         WindowStartupLocation="CenterOwner"
@@ -51,7 +52,17 @@
                                     <Border Background="#252526" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
                                         <Grid ColumnDefinitions="*,*,Auto,Auto,*,Auto,Auto,Auto" RowDefinitions="Auto">
                                             <TextBox Grid.Column="0" Text="{Binding Name}" Watermark="name" FontSize="12" Margin="0,0,4,0" />
-                                            <TextBox Grid.Column="1" Text="{Binding DataType}" Watermark="type" FontSize="12" Margin="0,0,4,0" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" Margin="0,0,4,0">
+                                                <ComboBox ItemsSource="{Binding $parent[Window].DataContext.AvailableTypes}"
+                                                          SelectedItem="{Binding SelectedType, Mode=TwoWay}"
+                                                          Width="140" FontSize="12" />
+                                                <TextBox Text="{Binding TypeLength}" Watermark="len"
+                                                         Width="58" FontSize="12"
+                                                         IsVisible="{Binding NeedsLength}" />
+                                                <TextBox Text="{Binding TypePrecision}" Watermark="prec,scale"
+                                                         Width="78" FontSize="12"
+                                                         IsVisible="{Binding NeedsPrecision}" />
+                                            </StackPanel>
                                             <CheckBox Grid.Column="2" Content="NULL" IsChecked="{Binding IsNullable}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
                                             <CheckBox Grid.Column="3" Content="PK" IsChecked="{Binding IsPrimaryKey}" VerticalAlignment="Center" FontSize="11" Margin="0,0,4,0" />
                                             <TextBox Grid.Column="4" Text="{Binding DefaultValue}" Watermark="default" FontSize="12" Margin="0,0,4,0" />

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform;
 
 namespace DaTT.App.Views;
 
@@ -19,6 +20,7 @@ internal sealed class ConfirmDialog : Window
     private ConfirmDialog(string message)
     {
         Title = "Confirm";
+        Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://DaTT.App/Assets/IconDaTT.ico")));
         Width = 400;
         MinHeight = 140;
         CanResize = false;

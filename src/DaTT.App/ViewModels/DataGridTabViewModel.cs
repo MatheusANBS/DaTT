@@ -18,6 +18,9 @@ public partial class DataGridTabViewModel : TabViewModel
     private IReadOnlyList<ColumnMeta> _columnInfos = [];
     private readonly Dictionary<(GridRow Row, int ColumnIndex), string?> _pendingCellEdits = [];
 
+    private string? _sortColumn;
+    private bool? _sortAscending; // null = no sort, false = DESC (1st click), true = ASC (2nd click)
+
     private const int DefaultPageSize = 100;
 
     public override string Title => _tableName;
@@ -42,12 +45,30 @@ public partial class DataGridTabViewModel : TabViewModel
     public IReadOnlyList<string> ExportFormats { get; } = ["csv", "json", "sql", "xlsx"];
     public string TableName => _tableName;
     public string EngineName => _provider.EngineName;
+    public string? SortColumn => _sortColumn;
+    public bool? SortAscending => _sortAscending;
+
+    // Keyed by table name so the order survives tab close/reopen within the same session.
+    private static readonly Dictionary<string, Dictionary<string, int>> _persistedColumnOrders = [];
+    public Dictionary<string, int> ColumnDisplayOrder
+    {
+        get
+        {
+            if (!_persistedColumnOrders.TryGetValue(_tableName, out var dict))
+                _persistedColumnOrders[_tableName] = dict = [];
+            return dict;
+        }
+    }
+
+    // Multi-row selection — populated by the View via SelectionChanged
+    public List<GridRow> SelectedRowsList { get; } = [];
 
     // Delegates set by the View to show dialogs — plain Func<> so the View can assign directly
     public Func<EditRowViewModel, Task>? ShowEditDialog { get; set; }
     public Func<CellExpandViewModel, Task>? ShowExpandDialog { get; set; }
     public Func<CellEditViewModel, Task>? ShowCellEditDialog { get; set; }
     public Func<string, Task<bool>>? ShowConfirmDialog { get; set; }
+    public Func<SetValuesViewModel, Task>? ShowSetValuesDialog { get; set; }
     public Func<string, Task<string?>>? PickExportPath { get; set; }
     public Func<Task<string?>>? PickImportPath { get; set; }
 
@@ -118,10 +139,15 @@ public partial class DataGridTabViewModel : TabViewModel
         IsBusy = true;
         try
         {
+            var orderBy = _sortColumn is not null
+                ? $"{QuoteSqlIdentifier(_sortColumn)} {(_sortAscending == true ? "ASC" : "DESC")}"
+                : null;
+
             var result = await _provider.GetRowsAsync(
                 _tableName, page, DefaultPageSize,
                 string.IsNullOrWhiteSpace(FilterText) ? null : FilterText,
-                ct: cancellationToken);
+                orderBy,
+                cancellationToken);
 
             AppLog.Info($"Page {page} OK — {result.Data.Count} rows (total {result.TotalRows})");
 
@@ -240,29 +266,57 @@ public partial class DataGridTabViewModel : TabViewModel
     }
 
     [RelayCommand]
-    private async Task SetNullAsync(GridRow row)
+    private async Task SetValuesAsync()
     {
-        if (_columnInfos.Count == 0) return;
+        if (_columnInfos.Count == 0 || SelectedRowsList.Count == 0) return;
 
-        var vm = BuildEditViewModel("Edit", row);
-        // Pre-set all non-PK fields to empty (will be saved as NULL)
-        foreach (var f in vm.Fields.Where(f => !f.IsPrimaryKey))
-            f.Value = string.Empty;
+        var columns = _columnInfos.Select(c => (c.Name, c.DataType, c.IsPrimaryKey));
+        var vm = new SetValuesViewModel(columns);
 
-        if (ShowEditDialog is not null)
-            await ShowEditDialog(vm);
+        if (ShowSetValuesDialog is not null)
+            await ShowSetValuesDialog(vm);
 
         if (!vm.Confirmed) return;
 
+        var checkedColumns = vm.ColumnItems
+            .Where(c => c.IsChecked && c.IsEnabled)
+            .ToList();
+
+        if (checkedColumns.Count == 0) return;
+
+        IsBusy = true;
+        ErrorMessage = null;
         try
         {
-            var pkValues = GetPkValues(row);
-            await _provider.UpdateRowAsync(_tableName, ConvertEditFields(vm.Fields), pkValues);
+            foreach (var row in SelectedRowsList.ToList())
+            {
+                var pkValues = GetPkValues(row);
+                var updateValues = new Dictionary<string, object?>();
+
+                foreach (var item in checkedColumns)
+                {
+                    updateValues[item.ColumnName] = vm.TargetValueMode switch
+                    {
+                        SetValueMode.Null => null,
+                        SetValueMode.Empty => string.Empty,
+                        SetValueMode.Custom => ParseValue(item.DataType, vm.CustomValue),
+                        _ => null
+                    };
+                }
+
+                await _provider.UpdateRowAsync(_tableName, updateValues, pkValues);
+            }
+
             await LoadPageAsync(CurrentPage);
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+            AppLog.Error("SetValues failed", ex);
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
@@ -862,6 +916,28 @@ public partial class DataGridTabViewModel : TabViewModel
             result.Add(tail);
 
         return result;
+    }
+
+    public async Task SortByColumnAsync(string columnName)
+    {
+        if (_sortColumn == columnName)
+        {
+            // Cycle: first click = DESC, second = ASC, third = remove sort
+            if (_sortAscending == false)
+                _sortAscending = true;
+            else
+            {
+                _sortColumn = null;
+                _sortAscending = null;
+            }
+        }
+        else
+        {
+            _sortColumn = columnName;
+            _sortAscending = false; // First click = DESC (maior → menor)
+        }
+
+        await LoadPageAsync(1);
     }
 
 }

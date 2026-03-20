@@ -14,13 +14,20 @@ public sealed partial class CreateTableViewModel : ViewModelBase
     [ObservableProperty] private bool _isStatusError;
 
     public ObservableCollection<ColumnDefinition> Columns { get; } = [];
+    public IReadOnlyList<string> AvailableTypes { get; }
 
     public bool Confirmed { get; private set; }
     public string GeneratedSql => SqlPreview;
 
-    public CreateTableViewModel()
+    public CreateTableViewModel(string engineName = "")
     {
-        Columns.Add(new ColumnDefinition { Name = "id", DataType = "SERIAL", IsPrimaryKey = true, IsNullable = false });
+        AvailableTypes = ColumnTypeRegistry.GetTypes(engineName);
+        var idType = engineName.Contains("postgres", StringComparison.OrdinalIgnoreCase)
+            ? "SERIAL"
+            : engineName.Contains("mysql", StringComparison.OrdinalIgnoreCase) || engineName.Contains("mariadb", StringComparison.OrdinalIgnoreCase)
+                ? "INT"
+                : "INTEGER";
+        Columns.Add(new ColumnDefinition { Name = "id", SelectedType = idType, IsPrimaryKey = true, IsNullable = false });
     }
 
     [RelayCommand]
@@ -173,8 +180,33 @@ public sealed partial class CreateTableViewModel : ViewModelBase
 public sealed partial class ColumnDefinition : ObservableObject
 {
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private string _dataType = "VARCHAR(255)";
+    [ObservableProperty] private string _selectedType = "INTEGER";
+    [ObservableProperty] private string _typeLength = "255";
+    [ObservableProperty] private string _typePrecision = string.Empty;
+    [ObservableProperty] private bool _needsLength;
+    [ObservableProperty] private bool _needsPrecision;
     [ObservableProperty] private bool _isNullable = true;
     [ObservableProperty] private bool _isPrimaryKey;
     [ObservableProperty] private string _defaultValue = string.Empty;
+
+    partial void OnSelectedTypeChanged(string value)
+    {
+        NeedsLength = ColumnTypeRegistry.NeedsLength(value);
+        NeedsPrecision = ColumnTypeRegistry.NeedsPrecision(value);
+    }
+
+    public string DataType
+    {
+        get
+        {
+            if (NeedsLength)
+            {
+                var len = TypeLength?.Trim();
+                return int.TryParse(len, out var l) && l > 0 ? $"{SelectedType}({l})" : $"{SelectedType}(255)";
+            }
+            if (NeedsPrecision)
+                return string.IsNullOrWhiteSpace(TypePrecision?.Trim()) ? SelectedType : $"{SelectedType}({TypePrecision!.Trim()})";
+            return SelectedType;
+        }
+    }
 }

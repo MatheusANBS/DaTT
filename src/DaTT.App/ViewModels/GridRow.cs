@@ -54,6 +54,9 @@ public sealed class GridRow : ObservableObject
 
 public sealed class CellInfo
 {
+    private const int MaxDisplayLength = 500;
+    private const int JsonParseThreshold = 50_000;
+
     public int Index { get; }
     public object? Raw { get; }
     public string Display { get; }
@@ -67,14 +70,28 @@ public sealed class CellInfo
         Raw = raw;
         IsNull = raw is null || raw is DBNull;
 
-        var full = IsNull ? string.Empty : Convert.ToString(raw) ?? string.Empty;
-        FullLength = full.Length;
-        Display = IsNull ? "(NULL)" : full;
+        if (IsNull)
+        {
+            FullLength = 0;
+            IsJson = false;
+            Display = "(NULL)";
+            return;
+        }
 
-        var trimmed = full.TrimStart();
-        IsJson = trimmed.Length > 0
-                 && (trimmed[0] == '{' || trimmed[0] == '[')
-                 && IsValidJson(trimmed);
+        var full = Convert.ToString(raw) ?? string.Empty;
+        FullLength = full.Length;
+
+        // Quick heuristic: find first non-whitespace char — O(1) for well-formed JSON
+        var firstChar = full.AsSpan().TrimStart();
+        bool looksLikeJson = firstChar.Length > 0 && (firstChar[0] == '{' || firstChar[0] == '[');
+
+        // For very large strings skip the costly full parse; trust the bracket heuristic
+        IsJson = looksLikeJson && (full.Length >= JsonParseThreshold || IsValidJson(full));
+
+        // Truncate BEFORE flattening newlines — never process the whole huge string
+        var chunk = full.Length > MaxDisplayLength ? full.Substring(0, MaxDisplayLength) : full;
+        var flat = chunk.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+        Display = full.Length > MaxDisplayLength ? flat + "…" : flat;
     }
 
     public string FullText => IsNull ? "(NULL)" : Convert.ToString(Raw) ?? string.Empty;

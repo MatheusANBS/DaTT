@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using DaTT.App.ViewModels;
 
 namespace DaTT.App.Views;
@@ -21,6 +22,28 @@ public partial class MainWindow : Window
             await vm.ConnectionManager.LoadConnectionsAsync();
             vm.OpenConnectionManagerCommand.Execute(null);
         }
+
+        var tabsControl = this.FindControl<TabControl>("TabsControl");
+        if (tabsControl is not null)
+            tabsControl.AddHandler(PointerReleasedEvent, OnTabPointerReleased, RoutingStrategies.Bubble);
+    }
+
+    private void OnTabPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton != MouseButton.Right) return;
+        if (DataContext is not MainWindowViewModel vm) return;
+
+        var tabItem = (e.Source as Avalonia.Visual)?.FindAncestorOfType<TabItem>();
+        if (tabItem?.DataContext is not TabViewModel clickedTab) return;
+
+        var cm = new ContextMenu();
+        cm.Items.Add(new MenuItem { Header = "Close", Command = vm.CloseTabCommand, CommandParameter = clickedTab });
+        cm.Items.Add(new MenuItem { Header = "Close Others", Command = vm.CloseOtherTabsCommand, CommandParameter = clickedTab });
+        cm.Items.Add(new Separator());
+        cm.Items.Add(new MenuItem { Header = "Close All", Command = vm.CloseAllTabsCommand });
+
+        cm.Open(tabItem);
+        e.Handled = true;
     }
 
     private async void OnTreeDoubleTapped(object? sender, TappedEventArgs e)
@@ -211,7 +234,7 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel vm) return;
         if (!vm.IsConnected) return;
 
-        var createVm = new CreateTableViewModel();
+        var createVm = new CreateTableViewModel(vm.ObjectExplorer.ActiveProvider?.EngineName ?? "");
         var dialog = new CreateTableWindow { DataContext = createVm };
         await dialog.ShowDialog(this);
 

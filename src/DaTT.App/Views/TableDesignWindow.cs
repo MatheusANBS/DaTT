@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Platform;
 using DaTT.App.ViewModels;
 
 namespace DaTT.App.Views;
@@ -39,6 +40,7 @@ internal sealed class TableDesignWindow : Window
         _viewModel = viewModel;
 
         Title = $"Design Table - {_viewModel.TableName}";
+        Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://DaTT.App/Assets/IconDaTT.ico")));
         Width = 860;
         Height = 620;
         MinWidth = 760;

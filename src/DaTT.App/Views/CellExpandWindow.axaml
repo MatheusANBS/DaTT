@@ -4,6 +4,7 @@
         x:Class="DaTT.App.Views.CellExpandWindow"
         x:DataType="vm:CellExpandViewModel"
         Title="{Binding ColumnName}"
+        Icon="/Assets/IconDaTT.ico"
         Width="700" Height="480"
         MinWidth="400" MinHeight="300"
         WindowStartupLocation="CenterOwner"

@@ -142,9 +142,9 @@ dotnet run --project src/DaTT.App
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │  DaTT.App   │ ──► │  DaTT.Core       │ ◄── │ DaTT.Providers  │
-│  (Avalonia)  │     │  (Interfaces &   │     │ (8 DB engines)  │
-│  ViewModels  │     │   Models)        │     │ BaseSqlProvider  │
-│  Views       │     │  Services        │     │ ProviderFactory  │
+│  (Avalonia) │     │  (Interfaces &   │     │ (8 DB engines)  │
+│  ViewModels │     │   Models)        │     │ BaseSqlProvider │
+│  Views      │     │  Services        │     │ ProviderFactory │
 └─────────────┘     └──────────────────┘     └─────────────────┘
 ```
 

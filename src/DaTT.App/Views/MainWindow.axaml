@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
         x:Class="DaTT.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/IconDaTT.ico"
         Title="DaTT — Database Tool"
         Width="1280" Height="720"
         MinWidth="900" MinHeight="600"
@@ -100,7 +100,7 @@
 
             <!-- ─── Tab Content Area ─────────────────────────────── -->
             <Grid Grid.Column="1" RowDefinitions="*">
-                <TabControl ItemsSource="{Binding OpenTabs}" SelectedItem="{Binding ActiveTab}">
+                <TabControl x:Name="TabsControl" ItemsSource="{Binding OpenTabs}" SelectedItem="{Binding ActiveTab}">
                     <TabControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:TabViewModel">
                             <StackPanel Orientation="Horizontal" Spacing="6">

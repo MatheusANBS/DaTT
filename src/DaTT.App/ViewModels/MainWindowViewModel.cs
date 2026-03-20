@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DaTT.App.Infrastructure;
@@ -31,6 +32,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSidebarVisible = true;
 
+    [ObservableProperty]
+    private bool _updateAvailable;
+
+    [ObservableProperty]
+    private string _updateTooltip = string.Empty;
+
+    private string _updateUrl = string.Empty;
+
     public MainWindowViewModel(
         ConnectionManagerViewModel connectionManager,
         ObjectExplorerViewModel objectExplorer)
@@ -43,6 +52,33 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ToggleSidebar()
     {
         IsSidebarVisible = !IsSidebarVisible;
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            var info = await UpdateService.CheckAsync();
+            if (info.HasUpdate)
+            {
+                UpdateAvailable = true;
+                _updateUrl = info.DownloadUrl;
+                UpdateTooltip = $"Version {info.LatestVersion} is available — click to download";
+                AppLog.Info($"Update available: {info.CurrentVersion} → {info.LatestVersion}");
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"Update check failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void OpenUpdate()
+    {
+        if (!string.IsNullOrEmpty(_updateUrl))
+            Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
     }
 
     [RelayCommand]

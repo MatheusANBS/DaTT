@@ -21,6 +21,7 @@ public partial class MainWindow : Window
         {
             await vm.ConnectionManager.LoadConnectionsAsync();
             vm.OpenConnectionManagerCommand.Execute(null);
+            _ = vm.CheckForUpdateCommand.ExecuteAsync(null);
         }
 
         var tabsControl = this.FindControl<TabControl>("TabsControl");

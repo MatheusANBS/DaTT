@@ -1,6 +1,8 @@
 using System.Collections.Specialized;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Input;
@@ -11,6 +13,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using DaTT.App.Infrastructure;
 using DaTT.App.ViewModels;
+using DaTT.Core.Models;
 
 namespace DaTT.App.Views;
 
@@ -87,8 +90,10 @@ public partial class DataGridTabView : UserControl
         {
             int idx = i;
             var columnName = _vm.ColumnNames[i];
+            var meta = _vm.ColumnInfos.FirstOrDefault(c => c.Name == columnName);
             var (header, indicator) = BuildSortableHeader(
                 columnName,
+                meta,
                 () => _ = DropColumnAsync(columnName),
                 () => _ = SortAndRefreshAsync(columnName));
 
@@ -98,7 +103,7 @@ public partial class DataGridTabView : UserControl
             {
                 Header = header,
                 CellTemplate = BuildCellTemplate(idx),
-                CellEditingTemplate = BuildCellEditingTemplate(idx),
+                CellEditingTemplate = BuildCellEditingTemplate(idx, meta),
                 IsReadOnly = false,
                 MaxWidth = 300
             };
@@ -157,7 +162,7 @@ public partial class DataGridTabView : UserControl
     }
 
     private static (Control Header, TextBlock Indicator) BuildSortableHeader(
-        string columnName, Action onDropColumn, Action onSort)
+        string columnName, ColumnMeta? meta, Action onDropColumn, Action onSort)
     {
         var dropItem = new MenuItem { Header = $"Drop column '{columnName}'" };
         dropItem.Foreground = new SolidColorBrush(Color.Parse("#F44747"));
@@ -172,13 +177,11 @@ public partial class DataGridTabView : UserControl
             Opacity = 0.4
         };
 
-        var header = new StackPanel
+        var topRow = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 4,
             VerticalAlignment = VerticalAlignment.Center,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            ContextMenu = new ContextMenu { Items = { dropItem } },
             Children =
             {
                 new TextBlock
@@ -191,6 +194,52 @@ public partial class DataGridTabView : UserControl
                 indicator
             }
         };
+
+        var header = new StackPanel
+        {
+            Orientation = Orientation.Vertical,
+            Spacing = 1,
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            ContextMenu = new ContextMenu { Items = { dropItem } },
+            Children = { topRow }
+        };
+
+        if (meta is not null)
+        {
+            var typeText = meta.SimpleType ?? meta.DataType;
+            var infoRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 2,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = typeText,
+                        FontSize = 9,
+                        Foreground = new SolidColorBrush(Color.Parse("#808080")),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontStyle = Avalonia.Media.FontStyle.Italic
+                    }
+                }
+            };
+
+            if (!meta.IsNullable)
+            {
+                infoRow.Children.Add(new TextBlock
+                {
+                    Text = "*",
+                    FontSize = 10,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = new SolidColorBrush(Color.Parse("#F44747")),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+            }
+
+            header.Children.Add(infoRow);
+        }
 
         // Left-click triggers sort (right-click is handled by the ContextMenu)
         header.PointerReleased += (_, e) =>
@@ -314,8 +363,15 @@ public partial class DataGridTabView : UserControl
         });
     }
 
-    private static FuncDataTemplate<GridRow> BuildCellEditingTemplate(int columnIndex)
+    private static FuncDataTemplate<GridRow> BuildCellEditingTemplate(int columnIndex, ColumnMeta? meta)
     {
+        if (meta?.IsDateTimeType == true)
+            return BuildDateTimeEditTemplate(columnIndex, hasDate: true, hasTime: true);
+        if (meta?.IsDateOnlyType == true)
+            return BuildDateTimeEditTemplate(columnIndex, hasDate: true, hasTime: false);
+        if (meta?.IsTimeOnlyType == true)
+            return BuildDateTimeEditTemplate(columnIndex, hasDate: false, hasTime: true);
+
         return new FuncDataTemplate<GridRow>((_, _) =>
         {
             var textBox = new TextBox
@@ -326,6 +382,168 @@ public partial class DataGridTabView : UserControl
             };
             textBox.Bind(TextBox.TextProperty, new Binding($"[{columnIndex}]") { Mode = BindingMode.TwoWay });
             return textBox;
+        });
+    }
+
+    private static FuncDataTemplate<GridRow> BuildDateTimeEditTemplate(int columnIndex, bool hasDate, bool hasTime)
+    {
+        return new FuncDataTemplate<GridRow>((_, _) =>
+        {
+            // Read-only text showing current value
+            var valueBox = new TextBox
+            {
+                FontSize = 12,
+                Padding = new Thickness(3, 1),
+                BorderThickness = new Thickness(0),
+                IsReadOnly = true,
+                Background = Brushes.Transparent,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 90
+            };
+
+            // Small calendar trigger button
+            var triggerBtn = new Button
+            {
+                Content = "📅",
+                FontSize = 11,
+                Padding = new Thickness(5, 2),
+                Margin = new Thickness(2, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+
+            // Pickers live inside the popup — no cell clipping
+            CalendarDatePicker? datePicker = hasDate ? new CalendarDatePicker
+            {
+                Width = 200,
+                FontSize = 12
+            } : null;
+
+            TimePicker? timePicker = hasTime ? new TimePicker
+            {
+                Width = 180,
+                FontSize = 12
+            } : null;
+
+            var pickerStack = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Spacing = 8
+            };
+            if (datePicker is not null) pickerStack.Children.Add(datePicker);
+            if (timePicker is not null) pickerStack.Children.Add(timePicker);
+
+            var popupBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#2D2D30")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#007ACC")),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(12),
+                BoxShadow = BoxShadows.Parse("0 4 16 2 #AA000000"),
+                Child = pickerStack
+            };
+
+            var popup = new Popup
+            {
+                Child = popupBorder,
+                PlacementMode = PlacementMode.Bottom,
+                PlacementTarget = triggerBtn,
+                IsLightDismissEnabled = true
+            };
+
+            triggerBtn.Click += (_, _) => popup.IsOpen = !popup.IsOpen;
+
+            // Root: text display | button, popup floats in overlay above the grid
+            var root = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(valueBox, 0);
+            Grid.SetColumn(triggerBtn, 1);
+            root.Children.Add(valueBox);
+            root.Children.Add(triggerBtn);
+            root.Children.Add(popup);
+
+            bool initializing = false;
+
+            root.DataContextChanged += (_, _) =>
+            {
+                if (root.DataContext is not GridRow row) return;
+                initializing = true;
+                try
+                {
+                    var str = row[columnIndex] ?? string.Empty;
+                    valueBox.Text = str;
+                    if (hasDate && hasTime)
+                    {
+                        if (DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                        {
+                            datePicker!.SelectedDate = dt;
+                            timePicker!.SelectedTime = dt.TimeOfDay;
+                        }
+                        else
+                        {
+                            datePicker!.SelectedDate = null;
+                            timePicker!.SelectedTime = null;
+                        }
+                    }
+                    else if (hasDate)
+                    {
+                        if (DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                            datePicker!.SelectedDate = dt;
+                        else
+                            datePicker!.SelectedDate = null;
+                    }
+                    else
+                    {
+                        if (TimeSpan.TryParse(str, out var ts))
+                            timePicker!.SelectedTime = ts;
+                        else
+                            timePicker!.SelectedTime = null;
+                    }
+                }
+                finally { initializing = false; }
+            };
+
+            void Sync()
+            {
+                if (initializing || root.DataContext is not GridRow row) return;
+                string newVal;
+                if (hasDate && hasTime)
+                {
+                    var date = datePicker!.SelectedDate?.Date;
+                    newVal = date.HasValue
+                        ? date.Value.Add(timePicker!.SelectedTime ?? TimeSpan.Zero)
+                            .ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+                        : string.Empty;
+                }
+                else if (hasDate)
+                {
+                    newVal = datePicker!.SelectedDate.HasValue
+                        ? datePicker.SelectedDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                        : string.Empty;
+                }
+                else
+                {
+                    newVal = timePicker!.SelectedTime.HasValue
+                        ? timePicker.SelectedTime.Value.ToString(@"hh\:mm\:ss")
+                        : string.Empty;
+                }
+                row[columnIndex] = newVal;
+                valueBox.Text = newVal;
+            }
+
+            if (datePicker is not null)
+                datePicker.SelectedDateChanged += (_, _) => Sync();
+            if (timePicker is not null)
+                timePicker.PropertyChanged += (_, e) =>
+                {
+                    if (e.Property.Name == nameof(TimePicker.SelectedTime)) Sync();
+                };
+
+            return root;
         });
     }
 

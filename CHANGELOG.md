@@ -2,6 +2,12 @@
 
 ---
 
+## [1.3.1] - 2026-03-20
+
+### Added
+
+- **DataGrid** — Visual improvements to table columns and date/time editing
+
 ## [1.3.0] - 2026-03-20
 
 ### Testing

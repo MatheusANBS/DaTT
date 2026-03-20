@@ -18,6 +18,8 @@ public partial class DataGridTabViewModel : TabViewModel
     private IReadOnlyList<ColumnMeta> _columnInfos = [];
     private readonly Dictionary<(GridRow Row, int ColumnIndex), string?> _pendingCellEdits = [];
 
+    public IReadOnlyList<ColumnMeta> ColumnInfos => _columnInfos;
+
     private string? _sortColumn;
     private bool? _sortAscending; // null = no sort, false = DESC (1st click), true = ASC (2nd click)
 

@@ -16,4 +16,11 @@ public sealed record ColumnMeta(
 {
     public bool IsPrimaryKey => string.Equals(Key, "PRI", StringComparison.OrdinalIgnoreCase)
                              || string.Equals(Key, "PRIMARY KEY", StringComparison.OrdinalIgnoreCase);
+
+    private string BareType => (DataType ?? string.Empty).ToLowerInvariant().Split('(')[0].Trim();
+
+    public bool IsDateTimeType => BareType == "datetime" || BareType.StartsWith("timestamp");
+    public bool IsDateOnlyType => BareType == "date";
+    public bool IsTimeOnlyType => (BareType == "time" || BareType == "timetz") && !IsDateTimeType;
+    public bool IsAnyDateTimeType => IsDateTimeType || IsDateOnlyType || IsTimeOnlyType;
 }

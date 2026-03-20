@@ -16,6 +16,15 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 
+$sdkDotnetDir = "C:\Program Files\dotnet"
+if ((Test-Path "$sdkDotnetDir\dotnet.exe") -and ($env:PATH -notlike "*$sdkDotnetDir*")) {
+    $env:PATH = "$sdkDotnetDir;" + $env:PATH
+}
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    Write-Host "  FAIL  dotnet not found. Install .NET SDK from https://aka.ms/dotnet/download" -ForegroundColor Red
+    exit 1
+}
+
 function Write-Step([string]$msg) {
     Write-Host ""
     Write-Host "  >> $msg" -ForegroundColor Cyan

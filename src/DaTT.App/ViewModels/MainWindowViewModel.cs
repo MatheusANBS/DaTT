@@ -55,6 +55,7 @@ public partial class MainWindowViewModel : ViewModelBase
     internal void NotifyAppReady()
     {
         _appReadyTcs.TrySetResult();
+        _ = CheckForUpdateAsync();
     }
 
     [RelayCommand]

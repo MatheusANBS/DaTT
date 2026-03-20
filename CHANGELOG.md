@@ -2,6 +2,12 @@
 
 ---
 
+## [1.2.8] - 2026-03-20
+
+### Hotfixes
+
+- **AutoUpdate** — Fixed update not calling after app ready notification
+
 ## [1.2.7] - 2026-03-20
 
 ### Added

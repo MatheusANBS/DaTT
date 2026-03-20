@@ -42,12 +42,19 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public GitHubRelease? PendingRelease { get; private set; }
 
+    private readonly TaskCompletionSource _appReadyTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     public MainWindowViewModel(
         ConnectionManagerViewModel connectionManager,
         ObjectExplorerViewModel objectExplorer)
     {
         _connectionManager = connectionManager;
         _objectExplorer = objectExplorer;
+    }
+
+    internal void NotifyAppReady()
+    {
+        _appReadyTcs.TrySetResult();
     }
 
     [RelayCommand]
@@ -59,9 +66,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task CheckForUpdateAsync()
     {
+        await _appReadyTcs.Task;
         try
         {
-            await Task.Delay(2000); // let the app finish loading first
             var release = await UpdateService.CheckForUpdateAsync();
             if (release is not null)
             {

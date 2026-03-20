@@ -2,6 +2,12 @@
 
 ---
 
+## [1.2.4] - 2026-03-20
+
+### Changed
+
+- **AutoUpdate** — Update check no longer uses a hardcoded delay; now waits asynchronously for the app to finish loading before checking for updates
+
 ## [1.2.3] - 2026-03-20
 
 ### Hotfixes

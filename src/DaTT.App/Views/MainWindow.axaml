@@ -44,8 +44,8 @@
 
                 <Button Grid.Column="2"
                         Classes="toolbar-btn,primary"
-                        Content="Update available"
-                        Command="{Binding OpenUpdateCommand}"
+                        Content="{Binding UpdateVersionText, StringFormat='Update {0} available'}"
+                        Click="OnUpdateButtonClick"
                         ToolTip.Tip="{Binding UpdateTooltip}"
                         IsVisible="{Binding UpdateAvailable}"
                         Margin="0,0,6,0" />

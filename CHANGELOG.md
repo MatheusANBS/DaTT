@@ -2,6 +2,12 @@
 
 ---
 
+## [1.2.1] - 2026-03-20
+
+### Hotfixes
+
+- **AutoUpdate** — Fixed issue with update not working as intended.
+
 ## [1.2.0] - 2026-03-20
 
 ### Added

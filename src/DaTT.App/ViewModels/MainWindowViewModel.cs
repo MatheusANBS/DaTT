@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DaTT.App.Infrastructure;
@@ -38,7 +37,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _updateTooltip = string.Empty;
 
-    private string _updateUrl = string.Empty;
+    [ObservableProperty]
+    private string _updateVersionText = string.Empty;
+
+    public GitHubRelease? PendingRelease { get; private set; }
 
     public MainWindowViewModel(
         ConnectionManagerViewModel connectionManager,
@@ -59,26 +61,22 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         try
         {
-            var info = await UpdateService.CheckAsync();
-            if (info.HasUpdate)
+            await Task.Delay(2000); // let the app finish loading first
+            var release = await UpdateService.CheckForUpdateAsync();
+            if (release is not null)
             {
+                PendingRelease = release;
+                var newVersion = release.TagName.TrimStart('v', 'V');
+                UpdateVersionText = $"v{newVersion}";
+                UpdateTooltip = $"Version {newVersion} available — click to update";
                 UpdateAvailable = true;
-                _updateUrl = info.DownloadUrl;
-                UpdateTooltip = $"Version {info.LatestVersion} is available — click to download";
-                AppLog.Info($"Update available: {info.CurrentVersion} → {info.LatestVersion}");
+                AppLog.Info($"Update available: {UpdateService.CurrentVersionString} → {newVersion}");
             }
         }
         catch (Exception ex)
         {
             AppLog.Warn($"Update check failed: {ex.Message}");
         }
-    }
-
-    [RelayCommand]
-    private void OpenUpdate()
-    {
-        if (!string.IsNullOrEmpty(_updateUrl))
-            Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
     }
 
     [RelayCommand]

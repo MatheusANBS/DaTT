@@ -29,6 +29,13 @@ public partial class MainWindow : Window
             tabsControl.AddHandler(PointerReleasedEvent, OnTabPointerReleased, RoutingStrategies.Bubble);
     }
 
+    private async void OnUpdateButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm || vm.PendingRelease is null) return;
+        var win = new UpdateWindow(vm.PendingRelease) { };
+        await win.ShowDialog(this);
+    }
+
     private void OnTabPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (e.InitialPressMouseButton != MouseButton.Right) return;

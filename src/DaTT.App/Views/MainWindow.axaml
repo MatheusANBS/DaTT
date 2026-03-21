@@ -11,6 +11,7 @@
         Title="DaTT — Database Tool"
         Width="1280" Height="720"
         MinWidth="900" MinHeight="600"
+        WindowState="Maximized"
         ExtendClientAreaToDecorationsHint="False">
 
     <Grid RowDefinitions="Auto,*,Auto">

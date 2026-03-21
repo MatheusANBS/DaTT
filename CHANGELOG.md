@@ -2,6 +2,13 @@
 
 ---
 
+## [1.4.1] - 2026-03-21
+
+### Changed
+
+- **Server Monitor — Chart Background** — Fixed transparent background on the latency chart; now uses the panel surface color for a consistent look.
+- **Server Monitor — Active Connections Count** — The "CONEXÕES ATIVAS" counter now reflects only truly active sessions (`active`, `idle in transaction`, etc.), excluding idle/sleep pool connections that have no real user behind them.
+- **Main Window** — Application now opens maximized by default.
 
 ## [1.4.0] - 2026-03-20
 

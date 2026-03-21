@@ -248,6 +248,26 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task OpenActiveConnectionsAsync()
+    {
+        var provider = await EnsureProviderForEngineAsync(null);
+        if (provider is null)
+            return;
+
+        var existing = OpenTabs.OfType<ActiveConnectionsTabViewModel>().FirstOrDefault();
+        if (existing is not null)
+        {
+            ActiveTab = existing;
+            return;
+        }
+
+        var tab = new ActiveConnectionsTabViewModel(provider);
+        OpenTabs.Add(tab);
+        ActiveTab = tab;
+        await tab.InitializeAsync();
+    }
+
+    [RelayCommand]
     private async Task OpenMonitorAsync()
     {
         var provider = await EnsureProviderForEngineAsync(null);

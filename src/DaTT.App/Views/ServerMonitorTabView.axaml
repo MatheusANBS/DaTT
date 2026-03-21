@@ -1,50 +1,141 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DaTT.App.ViewModels"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              x:Class="DaTT.App.Views.ServerMonitorTabView"
              x:DataType="vm:ServerMonitorTabViewModel">
 
     <DockPanel>
 
+        <!-- ─── Toolbar ──────────────────────────────────────────── -->
         <Border DockPanel.Dock="Top" Classes="toolbar">
             <StackPanel Orientation="Horizontal" Spacing="4">
                 <Button Classes="toolbar-btn,primary" Content="Refresh" Command="{Binding RefreshCommand}" />
                 <CheckBox Content="Auto" IsChecked="{Binding IsAutoRefreshEnabled}" VerticalAlignment="Center" FontSize="12" />
-                <TextBlock Text="Interval" VerticalAlignment="Center" Classes="muted" Margin="4,0" />
-                <NumericUpDown Minimum="2" Maximum="60" Value="{Binding RefreshIntervalSeconds}" Width="70" />
+                <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource InputBorder}"
+                        BorderThickness="1" CornerRadius="2" VerticalAlignment="Center" Margin="4,0,2,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="−" Command="{Binding DecrementAmountCommand}" Classes="toolbar-btn"
+                                Padding="5,2" MinWidth="22" FontSize="14"
+                                VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                        <TextBlock Text="{Binding IntervalAmount}" Foreground="{DynamicResource TextBright}"
+                                   FontSize="13" FontWeight="SemiBold" MinWidth="26"
+                                   TextAlignment="Center" VerticalAlignment="Center" Margin="2,0" />
+                        <Button Content="+" Command="{Binding IncrementAmountCommand}" Classes="toolbar-btn"
+                                Padding="5,2" MinWidth="22" FontSize="14"
+                                VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{DynamicResource InputBg}" BorderBrush="{DynamicResource InputBorder}"
+                        BorderThickness="1" CornerRadius="2" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="0">
+                        <Button Content="s"   Command="{Binding SetUnitCommand}" CommandParameter="s"
+                                Classes="toolbar-btn" Classes.primary="{Binding UnitIsSec}"   Padding="6,2" FontSize="12" />
+                        <Button Content="min" Command="{Binding SetUnitCommand}" CommandParameter="min"
+                                Classes="toolbar-btn" Classes.primary="{Binding UnitIsMin}"   Padding="6,2" FontSize="12" />
+                        <Button Content="h"   Command="{Binding SetUnitCommand}" CommandParameter="h"
+                                Classes="toolbar-btn" Classes.primary="{Binding UnitIsHour}"  Padding="6,2" FontSize="12" />
+                    </StackPanel>
+                </Border>
                 <TextBlock Text="{Binding StatusMessage}" Classes="muted" VerticalAlignment="Center" Margin="8,0" />
             </StackPanel>
         </Border>
 
-        <TextBlock DockPanel.Dock="Top"
-                   Text="{Binding ErrorMessage}"
-                   Foreground="{DynamicResource Danger}"
-                   FontSize="12"
-                   Margin="8,4"
+        <!-- ─── Error ────────────────────────────────────────────── -->
+        <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}"
+                   Foreground="{DynamicResource Danger}" FontSize="12" Margin="8,4"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-        <Grid RowDefinitions="*,Auto,Auto,*">
-            <DataGrid Grid.Row="0"
-                      ItemsSource="{Binding Metrics}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True">
+        <!-- ─── Body ─────────────────────────────────────────────── -->
+        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,220">
+
+            <!-- KPI cards row -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" Margin="8,8,8,0">
+
+                <!-- Ping -->
+                <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="PING" Classes="muted" FontSize="10" FontWeight="SemiBold" />
+                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding PingMs}" Foreground="{DynamicResource AccentGreen}"
+                                       FontSize="28" FontWeight="Bold" />
+                            <TextBlock Text="ms" Classes="muted" FontSize="13" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Active Connections -->
+                <Border Grid.Column="1" Classes="card" Margin="0,0,6,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="CONEXÕES ATIVAS" Classes="muted" FontSize="10" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding ActiveConnectionCount}" Foreground="{DynamicResource AccentBlue}"
+                                   FontSize="28" FontWeight="Bold" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Database -->
+                <Border Grid.Column="2" Classes="card" Margin="0,0,6,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="DATABASE" Classes="muted" FontSize="10" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding CurrentDatabase}" Foreground="{DynamicResource TextBright}"
+                                   FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding EngineName}" Classes="muted" FontSize="11" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Version -->
+                <Border Grid.Column="3" Classes="card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="VERSÃO" Classes="muted" FontSize="10" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding DbVersion}" Foreground="{DynamicResource TextPrimary}"
+                                   FontSize="11" TextWrapping="Wrap" MaxHeight="60" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Ping chart header -->
+            <TextBlock Grid.Row="1" Classes="section-title" Text="LATÊNCIA (ms)" Margin="8,10,0,0" />
+
+            <!-- Ping chart -->
+            <lvc:CartesianChart Grid.Row="2"
+                                Series="{Binding PingSeries}"
+                                XAxes="{Binding XAxes}"
+                                YAxes="{Binding YAxes}"
+                                Margin="8,0,8,4"
+                                Background="{DynamicResource PanelSoftBg}" />
+
+            <!-- Connections header -->
+            <DockPanel Grid.Row="3" LastChildFill="False" Margin="8,8,8,0">
+                <TextBlock Classes="section-title" Text="CONEXÕES ATIVAS" DockPanel.Dock="Left" />
+                <Button DockPanel.Dock="Right" Content="Terminate"
+                        Command="{Binding TerminateConnectionCommand}"
+                        Classes="toolbar-btn,danger" FontSize="11" Padding="8,2" />
+            </DockPanel>
+
+            <!-- Connections table -->
+            <DataGrid Grid.Row="4" Margin="8,0,8,0" MaxHeight="180"
+                      ItemsSource="{Binding Connections}"
+                      SelectedItem="{Binding SelectedConnection, Mode=TwoWay}"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserSortColumns="True" CanUserResizeColumns="True">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Metric" Binding="{Binding Name}" Width="220" />
-                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" />
+                    <DataGridTextColumn Header="PID"      Binding="{Binding Id}"       Width="Auto" MaxWidth="100" />
+                    <DataGridTextColumn Header="User"     Binding="{Binding User}"     Width="Auto" MaxWidth="200" />
+                    <DataGridTextColumn Header="Host/IP"  Binding="{Binding Host}"     Width="Auto" MaxWidth="220" />
+                    <DataGridTextColumn Header="Database" Binding="{Binding Database}" Width="Auto" MaxWidth="180" />
+                    <DataGridTextColumn Header="State"    Binding="{Binding State}"    Width="Auto" MaxWidth="120" />
+                    <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="Auto" MaxWidth="110" />
+                    <DataGridTextColumn Header="Query"    Binding="{Binding Query}"    Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
 
-            <GridSplitter Grid.Row="1" ResizeDirection="Rows" Height="4" Background="Transparent" />
-
-            <TextBlock Grid.Row="2" Classes="section-title" Text="PING SAMPLES" />
-
-            <DataGrid Grid.Row="3"
+            <!-- Ping samples table -->
+            <DataGrid Grid.Row="5" Margin="8,8,8,8"
                       ItemsSource="{Binding PingSamples}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True">
+                      AutoGenerateColumns="False" IsReadOnly="True">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Time" Binding="{Binding DisplayAt}" Width="160" />
-                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding PingMs}" Width="120" />
+                    <DataGridTextColumn Header="Time"      Binding="{Binding DisplayAt}" Width="160" />
+                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding PingMs}"    Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

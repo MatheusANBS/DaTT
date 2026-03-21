@@ -212,6 +212,40 @@
     <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
   </Style>
 
+  <!-- ─── NumericUpDown ──────────────────────────────────────── -->
+  <Style Selector="NumericUpDown">
+    <Setter Property="Background" Value="{DynamicResource InputBg}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+  <Style Selector="NumericUpDown /template/ ButtonSpinner">
+    <Setter Property="Background" Value="{DynamicResource InputBg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="MinWidth" Value="20" />
+  </Style>
+  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource HoverBg}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+  </Style>
+  <Style Selector="NumericUpDown /template/ TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,2" />
+  </Style>
+
   <!-- ─── DataGrid ───────────────────────────────────────────── -->
   <Style Selector="DataGrid">
     <Setter Property="Background" Value="{DynamicResource PanelBg}" />

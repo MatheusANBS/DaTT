@@ -30,11 +30,11 @@
             <ItemsControl ItemsSource="{Binding Fields}" Margin="8">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:FieldEdit">
-                        <Grid ColumnDefinitions="140,8,*" Margin="0,3">
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding ColumnName}" FontSize="12"
+                        <Grid ColumnDefinitions="Auto,8,*" Margin="0,4">
+                            <StackPanel Grid.Column="0" VerticalAlignment="Top" MinWidth="120" MaxWidth="180" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding ColumnName}" FontSize="12" TextWrapping="Wrap"
                                            FontWeight="{Binding IsPrimaryKey, Converter={x:Static vm:BoolToFontWeightConverter.Instance}}" />
-                                <TextBlock Text="{Binding DataType}" FontSize="10" Foreground="{DynamicResource TextMuted}" />
+                                <TextBlock Text="{Binding DataType}" FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource TextMuted}" />
                             </StackPanel>
                             <Panel Grid.Column="2" VerticalAlignment="Center">
                                 <TextBox Text="{Binding Value}"
@@ -42,7 +42,9 @@
                                          IsReadOnly="{Binding IsReadOnly}"
                                          Opacity="{Binding IsReadOnly, Converter={x:Static vm:BoolToOpacityConverter.Instance}}"
                                          AcceptsReturn="True"
-                                         MaxHeight="80" />
+                                         TextWrapping="Wrap"
+                                         MinHeight="36"
+                                         MaxHeight="{Binding TextInputMaxHeight}" />
                                 <StackPanel Orientation="Horizontal" Spacing="4"
                                             IsVisible="{Binding IsDateTimeField}">
                                     <CalendarDatePicker SelectedDate="{Binding DatePart, Mode=TwoWay}"

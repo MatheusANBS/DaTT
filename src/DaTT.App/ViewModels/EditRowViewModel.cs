@@ -13,7 +13,19 @@ public sealed class FieldEdit : ObservableObject
     public bool IsDateTimeField { get; }
     public bool IsDateOnlyField { get; }
     public bool IsTimeOnlyField { get; }
+    public bool IsJsonField { get; }
+    public bool IsLargeTextField { get; }
     public bool IsTextInput => !IsDateTimeField && !IsDateOnlyField && !IsTimeOnlyField;
+
+    public int TextInputMaxHeight
+    {
+        get
+        {
+            if (IsJsonField) return 220;
+            if (IsLargeTextField) return 150;
+            return 80;
+        }
+    }
 
     // Read-only only when editing an existing row's PK — never in Insert mode
     public bool IsReadOnly { get; }
@@ -77,6 +89,19 @@ public sealed class FieldEdit : ObservableObject
         return (isDateTime, isDate, isTime);
     }
 
+    private static bool DetectJsonField(string dataType)
+    {
+        var bare = dataType.ToLowerInvariant().Split('(')[0].Trim();
+        return bare is "json" or "jsonb";
+    }
+
+    private static bool DetectLargeTextField(string dataType)
+    {
+        var bare = dataType.ToLowerInvariant().Split('(')[0].Trim();
+        return bare is "text" or "longtext" or "mediumtext" or "tinytext"
+            or "clob" or "nclob" or "ntext";
+    }
+
     public FieldEdit(string columnName, string dataType, bool isPrimaryKey, string currentValue, bool isInsertMode = false)
     {
         ColumnName = columnName;
@@ -86,6 +111,8 @@ public sealed class FieldEdit : ObservableObject
         _value = currentValue;
 
         (IsDateTimeField, IsDateOnlyField, IsTimeOnlyField) = DetectKind(dataType);
+        IsJsonField = DetectJsonField(dataType);
+        IsLargeTextField = DetectLargeTextField(dataType);
 
         if (IsDateTimeField)
         {

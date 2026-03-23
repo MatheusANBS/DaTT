@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DaTT.App.ViewModels;
 
+public enum JsonViewMode { Flat, Vertical }
+
 public sealed partial class CellEditViewModel : ViewModelBase
 {
     public string TableName { get; }
@@ -21,6 +23,12 @@ public sealed partial class CellEditViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showJsonTree;
 
+    [ObservableProperty]
+    private JsonViewMode _textFormat = JsonViewMode.Vertical;
+
+    public bool IsFlat => _textFormat == JsonViewMode.Flat;
+    public bool IsVertical => _textFormat == JsonViewMode.Vertical;
+
     public bool Confirmed { get; private set; }
 
     public ObservableCollection<JsonTreeNode> JsonNodes { get; } = [];
@@ -37,11 +45,34 @@ public sealed partial class CellEditViewModel : ViewModelBase
             ? (row.Cells[columnIndex].IsNull ? string.Empty : row.Cells[columnIndex].FullText)
             : string.Empty;
         RebuildJsonTree();
+        if (IsJson)
+            _value = ApplyFormat(_value, _textFormat);
+    }
+
+    private static string ApplyFormat(string raw, JsonViewMode mode)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            return mode == JsonViewMode.Vertical
+                ? JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true })
+                : JsonSerializer.Serialize(doc.RootElement);
+        }
+        catch { return raw; }
     }
 
     partial void OnValueChanged(string value)
     {
         RebuildJsonTree();
+    }
+
+    partial void OnTextFormatChanged(JsonViewMode value)
+    {
+        OnPropertyChanged(nameof(IsFlat));
+        OnPropertyChanged(nameof(IsVertical));
+        var trimmed = Value?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed) || !IsJson) return;
+        Value = ApplyFormat(trimmed, value);
     }
 
     public void Confirm() => Confirmed = true;

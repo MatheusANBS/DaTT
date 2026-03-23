@@ -22,10 +22,25 @@
         </Border>
 
         <Border DockPanel.Dock="Bottom" Classes="toolbar">
-            <Button Classes="ghost" Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked" />
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="4"
+                            IsVisible="{Binding IsJson}" VerticalAlignment="Center">
+                    <TextBlock Text="Format:" FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextMuted}" />
+                    <RadioButton Content="Flat" GroupName="JsonModeExpand"
+                                 IsChecked="{Binding IsFlat}"
+                                 Click="OnFlatClicked"
+                                 VerticalAlignment="Center" FontSize="11" />
+                    <RadioButton Content="Vertical" GroupName="JsonModeExpand"
+                                 IsChecked="{Binding IsVertical}"
+                                 Click="OnVerticalClicked"
+                                 VerticalAlignment="Center" FontSize="11" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="ghost" Content="Close" Click="OnCloseClicked" />
+            </Grid>
         </Border>
 
-        <TextBox Text="{Binding FormattedContent}"
+        <TextBox Text="{Binding DisplayContent}"
                  IsReadOnly="True"
                  AcceptsReturn="True"
                  FontFamily="Consolas,Courier New,monospace"
@@ -33,7 +48,11 @@
                  Background="Transparent"
                  BorderThickness="0"
                  Padding="8"
-                 TextWrapping="Wrap" />
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Stretch"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.IsScrollChainingEnabled="False" />
 
     </DockPanel>
 </Window>

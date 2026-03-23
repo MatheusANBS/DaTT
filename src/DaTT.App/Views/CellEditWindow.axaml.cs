@@ -21,4 +21,16 @@ public partial class CellEditWindow : Window
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e)
         => Close();
+
+    private void OnFlatClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is CellEditViewModel vm)
+            vm.TextFormat = JsonViewMode.Flat;
+    }
+
+    private void OnVerticalClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is CellEditViewModel vm)
+            vm.TextFormat = JsonViewMode.Vertical;
+    }
 }
